@@ -3072,6 +3072,7 @@ void MegaClient::exec()
                     insca_notlast = false;
                     jsonsc.begin(pendingsc->in.c_str());
                     jsonsc.enterobject();
+                    std::cout<<pendingsc->in.c_str()<<std::endl;
                     app->notify_network_activity(NetworkActivityChannel::SC,
                                                  NetworkActivityType::REQUEST_RECEIVED,
                                                  API_OK);
@@ -5248,6 +5249,7 @@ bool MegaClient::procsc()
         {
             switch (jsonsc.getnameid())
             {
+                
                 case makeNameid("w"):
                     jsonsc.storeobject(&scnotifyurl);
                     break;
@@ -5258,6 +5260,7 @@ bool MegaClient::procsc()
                     break;
 
                 case makeNameid("sn"):
+                    std::cout<<"sn"<<std::endl;
                     // the sn element is guaranteed to be the last in sequence (except for notification requests (c=50))
                     scsn.setScsn(&jsonsc);
                     // At this point no CurrentSeqtag should be seen. mCurrentSeqtagSeen is set true
@@ -5479,6 +5482,7 @@ bool MegaClient::procsc()
                     return true;
 
                 case makeNameid("a"):
+                    std::cout<<"a"<<std::endl;
                     if (jsonsc.enterarray())
                     {
                         LOG_debug << "Processing action packets for " << string(sessionid, sizeof(sessionid));
@@ -5497,6 +5501,7 @@ bool MegaClient::procsc()
 
         if (insca)
         {
+            std::cout<<"handle a"<<std::endl;
             auto actionpacketStart = jsonsc.pos;
             if (jsonsc.enterobject())
             {
