@@ -932,6 +932,7 @@ void CurlHttpIO::send_request(CurlHttpContext* httpctx)
         curl_easy_setopt(curl, CURLOPT_HTTPHEADER, httpctx->headers);
         curl_easy_setopt(curl, CURLOPT_ENCODING, "");
         curl_easy_setopt(curl, CURLOPT_SHARE, httpio->curlsh);
+        //marcotan all string already write into memory. for what reason it need incream proces json?
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*)req);
         curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, check_header);
@@ -1563,7 +1564,9 @@ bool CurlHttpIO::multidoio(CURLM *curlmhandle)
         if (curl_easy_getinfo(msg->easy_handle, CURLINFO_PRIVATE, (char**)&req) == CURLE_OK && req)
         {
             req->httpio = NULL;
-
+            //marcotan done
+            //CURLMSG_DONE maybe is the curl api intern status
+            std::cout<<"curl msg done"<<std::endl;
             if (msg->msg == CURLMSG_DONE)
             {
                 measureLatency(msg->easy_handle, req);
@@ -1723,6 +1726,8 @@ bool CurlHttpIO::multidoio(CURLM *curlmhandle)
                 m_off_t actualLength = req->buf != nullptr || req->mChunked ?
                                            req->bufpos :
                                            static_cast<m_off_t>(req->in.size());
+                //marcotan maybe set status at here
+                std::cout<<"http reponse 200"<<std::endl;
                 req->status =
                     ((req->httpstatus == 200 ||
                       (req->mExpectRedirect && req->isRedirection() && req->mRedirectURL.size())) &&
@@ -2020,6 +2025,8 @@ size_t CurlHttpIO::write_data(void* ptr, size_t size, size_t nmemb, void* target
 
         if (len)
         {
+            std::cout<<"http server response data"<<std::endl;
+            //marcotan why not check the http body len?
             req->put(ptr, static_cast<unsigned>(len), true);
         }
 

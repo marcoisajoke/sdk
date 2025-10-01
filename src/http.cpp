@@ -404,7 +404,7 @@ void HttpReq::setreq(const char* u, contenttype_t t)
 // add data to fixed or variable buffer
 void HttpReq::put(void* data, unsigned len, bool purge)
 {
-    if (buf)
+    if (buf)  //buf is nullptr
     {
         if (bufpos + len > buflen)
         {
@@ -422,6 +422,8 @@ void HttpReq::put(void* data, unsigned len, bool purge)
         }
 
         in.append((char*)data, len);
+        //marcotan
+        std::cout<<"http revieve data. Len is " <<len<<std::endl;
     }
 
     bufpos += len;

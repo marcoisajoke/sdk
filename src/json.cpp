@@ -111,6 +111,7 @@ bool JSON::storeobject(string* s)
         {
             if (s)
             {
+                //marcotan 保存括号内的字符串，为了进一步解析json
                 if (*pos == '"')
                 {
                     s->assign(pos + 1, static_cast<size_t>(ptr - pos - 2));

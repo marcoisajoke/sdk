@@ -3054,6 +3054,8 @@ void MegaClient::exec()
 
             switch (static_cast<reqstatus_t>(pendingsc->status))
             {
+                    //marcotan can not find status be set to success.
+                    //maybe set by server. no idea
             case REQ_SUCCESS:
                 pendingscTimedOut = false;
                 if (pendingsc->contentlength == 1
@@ -3072,7 +3074,8 @@ void MegaClient::exec()
                     insca_notlast = false;
                     jsonsc.begin(pendingsc->in.c_str());
                     jsonsc.enterobject();
-                    std::cout<<pendingsc->in.c_str()<<std::endl;
+                    //marcotan
+                    std::cout<<"begin process json string: "<< pendingsc->in.c_str() << std::endl;
                     app->notify_network_activity(NetworkActivityChannel::SC,
                                                  NetworkActivityType::REQUEST_RECEIVED,
                                                  API_OK);
@@ -3292,6 +3295,7 @@ void MegaClient::exec()
 
                 pendingsc->type = REQ_JSON;
                 pendingsc->post(this);
+                std::cout<<"send http " << pendingsc->posturl << std::endl;
                 app->notify_network_activity(NetworkActivityChannel::SC,
                                              NetworkActivityType::REQUEST_SENT,
                                              API_OK);
