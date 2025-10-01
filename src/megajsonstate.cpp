@@ -162,8 +162,7 @@ bool PacketStateMgr::exec() {
         return false;
     }
     
-    string value;
-    PACKETSTAT p_state = PACKETSTAT_BEGIN;
+    p_state = PACKETSTAT_BEGIN;
     while(jsongString->getCurChar(cur_c) == 0) {
         if(func_map[p_state](this)) {
             continue;
