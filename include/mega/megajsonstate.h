@@ -23,7 +23,8 @@ private:
     uint64_t pos;
     uint64_t size;
 };
-
+typedef int (*FuncPtr)(int, int);
+typedef bool (*PacketStateMgrFuncPtr)(PacketStateMgr* mgr)
 class PacketStateMgr {
 public:
     PacketStateMgr& getInstance();
@@ -31,9 +32,14 @@ public:
     bool exec();
 private:
     PacketStateMgr();
+    std::vector<PacketStateMgrFuncPtr> func_map;
+public:
     JsonString* jsongString;
     MegaClient* client;
-    
+    char cur_c = 0;
+    char pre_c = 0;
+    string key;
+    PACKETSTAT p_state;
 };
 }
 #endif
