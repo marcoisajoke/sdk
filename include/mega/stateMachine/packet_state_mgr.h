@@ -8,22 +8,10 @@
 
 #ifndef PACKET_STATE_MGR_H
 #define PACKET_STATE_MGR_H 1
-
+#include "mega/stateMachine/json_string.h"
 
 namespace mega {
 
-class JsonString {
-public:
-    JsonString();
-    void init(const char* s, uint64_t size);
-    int getCurChar(char& c);
-    void inc();
-private:
-    char* str;
-    uint64_t pos;
-    uint64_t size;
-};
-typedef int (*FuncPtr)(int, int);
 typedef bool (*PacketStateMgrFuncPtr)(PacketStateMgr* mgr)
 class PacketStateMgr {
 public:
@@ -57,6 +45,7 @@ public:
     string key;
     string value;
     PACKETSTAT p_state;
+    ActionStateMgr action_state_mgr;
 };
 }
 #endif

@@ -5,30 +5,10 @@
 //  Created by marco on 2025/10/1.
 //
 
-#include "mega/packet_state_mgr.h"
+#include "mega/stteMachine/packet_state_mgr.h"
 
 
 namespace mega {
-JsonString::JsonString() {
-    str = nullptr;
-    pos = 0;
-    size = 0;
-}
-void JsonString::init(const char* s, uint64_t size) {
-    str = s;
-    pos = 0;
-    this.size = size;
-}
-int JsonString::getCurChar(char& c) {
-    if(pos >= size) {
-        return -1;
-    }
-    c = str[pos];
-    return 0;
-}
-void JsonString::inc() {
-    pos++;
-}
 enum PACKETSTAT {
     PACKETSTAT_BEGIN,
     PACKETSTAT_HANDLE_SEARCH_KEY,
@@ -180,10 +160,10 @@ bool PacketStateMgr::saving_key_func(PacketStateMgr* mgr) {
             mgr->p_state = PACKETSTAT_SAVE_SN_PRE;
             mgr->jsongString->inc();
             return true;
-            
         }
         if(mgr->key == "a") {
-            
+            mgr->action_state_mgr.init(mgr->jsongString, mgr->client);
+            return mgr->action_state_mgr.exec();
         }
         //bypass
     }
