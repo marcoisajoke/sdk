@@ -11,20 +11,63 @@ JsonString::JsonString() {
     str = nullptr;
     pos = 0;
     size = 0;
+    cur_c = 0;
+    pre_c = 0;
 }
 void JsonString::init(const char* s, uint64_t size) {
     str = s;
     pos = 0;
+    if(size>0) {
+        pre_c = 0;
+        cur_c = str[0];
+    }
     this.size = size;
 }
-int JsonString::getCurChar(char& c) {
-    if(pos >= size) {
-        return -1;
-    }
-    c = str[pos];
-    return 0;
+bool JsonString::checkCurChar() {
+    return pos < size;
 }
 void JsonString::inc() {
     pos++;
+    if(pos<size) {
+        cur_c = s[pos];
+    }
+}
+bool JsonString::bypassEmpty() {
+    if(cur_c == " ") {
+        inc();
+        return true;
+    }
+    return false;
+}
+bool JsonString::decodeString(std::string& s) {
+    if(cur_c != '"' || pre_c == '\\') {
+        pre_c = cur_c;
+        s.append(cur_c);
+        inc();
+        return true;
+    }
+    pre_c = 0;
+    return false;
+}
+bool JsonString::bypassChar(char c) {
+    if(cur_c == c) {
+        inc();
+        return true;
+    }
+    return false;
+}
+void JsonString::resetPos(uint64_t p) {
+    pos = p;
+    if(pos < size) {
+        cur_c = str[pos];
+    }
+    if(pos > 0) {
+        pre_c = str[pos-1];
+    } else {
+        pre_c = 0;
+    }
+}
+void JsonString::bypassValue() {
+    
 }
 }

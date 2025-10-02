@@ -38,13 +38,11 @@ private:
     PacketStateMgr();
     std::vector<PacketStateMgrFuncPtr> func_map;
 public:
-    JsonString* jsongString;
+    JsonString* jsonString;
     MegaClient* client;
-    char cur_c = 0;
-    char pre_c = 0;
     string key;
     string value;
-    PACKETSTAT p_state;
+    PACKETSTATE p_state;
     ActionStateMgr action_state_mgr;
 };
 }

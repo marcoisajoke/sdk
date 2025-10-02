@@ -13,6 +13,9 @@
 namespace mega {
 enum ACTIONSTATE {
     ACTIONSTATE_BEGIN,
+    ACTIONSTATE_INTO_ACTION_OBJECT,
+    ACTIONSTATE_SEARCH_KEY,
+    ACTIONSTATE_SAVING_KEY,
     ACTIONSTATE_END,
 };
 typedef bool (*ActionStateMgrFuncPtr)(PacketStateMgr* mgr)
@@ -22,12 +25,13 @@ public:
     void init(JsonString* jStr, MegaClient* cli);
     bool exec();
     std::vector<ActionStateMgrFuncPtr> func_map;
-    static bool action_state_begin(ActionStateMgr* mgr);
+    static bool action_state_begin_func(ActionStateMgr* mgr);
+    static bool action_state_into_action_object_func(ActionStateMgr* mgr);
+    static bool action_state_search_key(ActionStateMgr* mgr);
+    static bool action_state_saving_key(ActionStateMgr* mgr);
 public:
-    JsonString* jsongString;
+    JsonString* jsonString;
     MegaClient* client;
-    char cur_c = 0;
-    char pre_c = 0;
     string key;
     string value;
     ACTIONSTATE p_state;
