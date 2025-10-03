@@ -31,6 +31,7 @@ void ActionStateMgr::init(JsonString* jStr, MegaClient* cli) {
     is_in_checker = false;
     cmd = "";
     is_check_bypass = false;
+    has_i = false;
 }
 
 bool ActionStateMgr::exec() {
@@ -123,9 +124,19 @@ bool ActionStateMgr::checkActionPacket() {
     }
     return true;
 }
-bool ActionStateMgr::checkIsBypass() {
+bool ActionStateMgr::checkCanRun() {
     if(is_check_bypass) {
-        
+        is_check_bypass = false;
+        if(fetchingnodes) {
+            return true;
+        }
+        if(!has_i) {
+            return true;
+        }
+        if(cmd == "d" || cmd == "t") {
+            return true;
+        }
+
     }
     return false;
 }
@@ -137,7 +148,7 @@ bool ActionStateMgr::saving_key(ActionStateMgr* mgr) {
             return false;
         }
         mgr->jsonString->inc();
-        if(mgr->checkIsBypass) {
+        if(!mgr->checkCanRun()) {
             mgr->jsongString->bypassObjectInside();
             return true;
         }
@@ -148,6 +159,7 @@ bool ActionStateMgr::saving_key(ActionStateMgr* mgr) {
         }
         if(mgr->key == "i") {
             mgr->jsonString->bypassValue();
+            has_i = true;
             return true;
         }
         if(mgr->key == "st") {
