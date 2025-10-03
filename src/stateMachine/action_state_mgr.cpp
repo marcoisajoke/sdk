@@ -15,10 +15,10 @@ ActionStateMgr::ActionStateMgr() {
     jsonString = nullptr;
     client = nullptr;
     func_map.resize(ACTIONSTATE_END + 1);
-    func_map[ACTIONSTATE_BEGIN] = ActionStateMgr::action_state_begin_func;
-    func_map[ACTIONSTATE_INTO_ACTION_OBJECT] = ActionStateMgr::action_state_into_action_object_func;
-    func_map[ACTIONSTATE_SEARCH_KEY] = ActionStateMgr::action_state_search_key;
-    func_map[ACTIONSTATE_SAVING_KEY] = ActionStateMgr::action_state_saving_key;
+    func_map[ACTIONSTATE_BEGIN] = ActionStateMgr::begin_func;
+    func_map[ACTIONSTATE_INTO_ACTION_OBJECT] = ActionStateMgr::into_action_object_func;
+    func_map[ACTIONSTATE_SEARCH_KEY] = ActionStateMgr::search_key;
+    func_map[ACTIONSTATE_SAVING_KEY] = ActionStateMgr::saving_key;
     
 }
 void ActionStateMgr::init(JsonString* jStr, MegaClient* cli) {
@@ -41,7 +41,7 @@ bool ActionStateMgr::exec() {
     return false;
 }
 
-bool ActionStateMgr::action_state_begin_func(ActionStateMgr* mgr) {
+bool ActionStateMgr::begin_func(ActionStateMgr* mgr) {
     if(mgr->jsonString->bypassEmpty()) {
         return true;
     }
@@ -58,7 +58,7 @@ bool ActionStateMgr::action_state_begin_func(ActionStateMgr* mgr) {
     mgr->jsonString->bypassValue();
     return true;
 }
-bool ActionStateMgr::action_state_into_action_object_func(ActionStateMgr* mgr) {
+bool ActionStateMgr::into_action_object_func(ActionStateMgr* mgr) {
     if(mgr->jsonString->bypassEmpty()) {
         return true;
     }
@@ -78,7 +78,7 @@ bool ActionStateMgr::checkEnd() {
     }
     return false;
 }
-bool ActionStateMgr::action_state_search_key(ActionStateMgr* mgr) {
+bool ActionStateMgr::search_key(ActionStateMgr* mgr) {
     if(mgr->jsonString->bypassEmpty()) {
         return true;
     }
@@ -94,7 +94,7 @@ bool ActionStateMgr::action_state_search_key(ActionStateMgr* mgr) {
         return false;
     }
 }
-bool ActionStateMgr::action_state_saving_key(ActionStateMgr* mgr) {
+bool ActionStateMgr::saving_key(ActionStateMgr* mgr) {
     if(mgr->jsonString->decodeString(mgr->key)) {
         return true;
     } else {

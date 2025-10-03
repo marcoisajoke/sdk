@@ -25,10 +25,10 @@ public:
     void init(JsonString* jStr, MegaClient* cli);
     bool exec();
     std::vector<ActionStateMgrFuncPtr> func_map;
-    static bool action_state_begin_func(ActionStateMgr* mgr);
-    static bool action_state_into_action_object_func(ActionStateMgr* mgr);
-    static bool action_state_search_key(ActionStateMgr* mgr);
-    static bool action_state_saving_key(ActionStateMgr* mgr);
+    static bool begin_func(ActionStateMgr* mgr);
+    static bool into_action_object_func(ActionStateMgr* mgr);
+    static bool search_key(ActionStateMgr* mgr);
+    static bool saving_key(ActionStateMgr* mgr);
 public:
     JsonString* jsonString;
     MegaClient* client;
