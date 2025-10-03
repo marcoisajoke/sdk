@@ -32,6 +32,7 @@ void ActionStateMgr::init(JsonString* jStr, MegaClient* cli) {
     cmd = "";
     is_check_bypass = false;
     has_i = false;
+    keys_ptr = nullptr;
 }
 
 bool ActionStateMgr::exec() {
@@ -106,6 +107,8 @@ bool ActionStateMgr::search_key(ActionStateMgr* mgr) {
 bool ActionStateMgr::checkActionPacket() {
     if(is_in_checker) {
         if(key != "a" && key != "i" && key != "st") {
+            //do check only after get element a/i/st values
+            //only do one time check for each object
             if(cmd == "t" && client->lastAPDeletedNode.get() && dynamic_cast<CommandMoveNode*>(client->reqs.getCurrentCommand(client->mCurrentSeqtagSeen))) {
                 LOG_verbose << client->clientname << "st tag implicity not changing for moves";
                 is_in_checker = false;
@@ -126,19 +129,32 @@ bool ActionStateMgr::checkActionPacket() {
 }
 bool ActionStateMgr::checkCanRun() {
     if(is_check_bypass) {
+        //check one time in each object
         is_check_bypass = false;
-        if(fetchingnodes) {
+        if(fetchingnodes || !has_i || cmd == "d" || cmd == "t") {
+            auto itr = cmd_keys.find(cmd);
+            if(itr != cmd_keys.end()) {
+                keys_ptr = &itr.second;
+            }
             return true;
+        } else {
+            return false;
         }
-        if(!has_i) {
-            return true;
-        }
-        if(cmd == "d" || cmd == "t") {
-            return true;
-        }
-
     }
-    return false;
+    return true;
+}
+bool ActionStateMgr::key_a_func(ActionStateMgr* mgr) {
+    mgr->p_state = ACTIONSTATE_SEARCH_A_VALUE;
+    return true;
+}
+bool ActionStateMgr::key_i_func(ActionStateMgr* mgr) {
+    mgr->jsonString->bypassValue();
+    has_i = true;
+    return true;
+}
+bool ActionStateMgr::key_st_func(ActionStateMgr* mgr) {
+    mgr->p_state = ACTIONSTATE_SEARCH_ST_VALUE;
+    return true;
 }
 bool ActionStateMgr::saving_key(ActionStateMgr* mgr) {
     if(mgr->jsonString->decodeString(mgr->key)) {
@@ -148,24 +164,21 @@ bool ActionStateMgr::saving_key(ActionStateMgr* mgr) {
             return false;
         }
         mgr->jsonString->inc();
+        if(keys_ptr != nullptr && keys_ptr.find(mgr->key) == keys_ptr.end()) {
+            mgr->jsonString->bypassValue();
+            continue;
+        }
+        
         if(!mgr->checkCanRun()) {
             mgr->jsongString->bypassObjectInside();
             return true;
         }
-
-        if(mgr->key == "a") {
-            mgr->p_state = ACTIONSTATE_SEARCH_A_VALUE;
-            return true;
-        }
-        if(mgr->key == "i") {
+        auto itr = mgr->key_func.find(mgr->key);
+        if(itr == mgr->key_func.end()) {
             mgr->jsonString->bypassValue();
-            has_i = true;
             return true;
         }
-        if(mgr->key == "st") {
-            mgr->p_state = ACTIONSTATE_SEARCH_ST_VALUE;
-            return true;
-        }
+        itr.second(mgr);
     }
     return true;
 }

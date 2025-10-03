@@ -22,7 +22,8 @@ enum ACTIONSTATE {
     ACTIONSTATE_SAVING_ST_VALUE,
     ACTIONSTATE_END,
 };
-typedef bool (*ActionStateMgrFuncPtr)(PacketStateMgr* mgr)
+typedef bool (*ActionStateMgrFuncPtr)(PacketStateMgr* mgr);
+typedef bool (*ActionStateKeyFuncPtr)(ActionStateMgr* mgr);
 class ActionStateMgr {
 public:
     ActionStateMgr();
@@ -31,12 +32,25 @@ public:
     bool checkActionPacket();
     bool checkCanRun();
     std::vector<ActionStateMgrFuncPtr> func_map;
+    
+    /*action state function begin*/
     static bool begin_func(ActionStateMgr* mgr);
     static bool into_action_object_func(ActionStateMgr* mgr);
     static bool search_key(ActionStateMgr* mgr);
     static bool saving_key(ActionStateMgr* mgr);
     static bool search_a_value(ActionStateMgr* mgr);
     static bool saving_a_value(ActionStateMgr* mgr);
+    static bool search_st_value(ActionStateMgr* mgr);
+    static bool saving_st_value(ActionStateMgr* mgr);
+    /*action state function end*/
+    
+    /*key function begin*/
+    static bool key_a_func(ActionStateMgr* mgr);
+    static bool key_i_func(ActionStateMgr* mgr);
+    static bool key_st_func(ActionStateMgr* mgr);
+    
+    /*key function end*/
+    
 public:
     JsonString* jsonString;
     MegaClient* client;
@@ -47,6 +61,15 @@ public:
     bool is_in_checker = false;
     bool is_check_bypass = false;
     std::string cmd;
+    std::unordered_set<std::string>* keys_ptr = nullptr;
+    
+    std::unordered_map<std::string, ActionStateKeyFuncPtr> key_func = {
+        {"a", ActionStateMgr::key_a_func},
+        {"i", ActionStateMgr::key_i_func},
+        {"st", ActionStateMgr::key_st_func},
+        
+        
+    };
     
     std::unordered_map<std::string, std::unordered_set<std::string>> cmd_keys = {
         {"u",       {"n", "u", "at", "ts"}},
