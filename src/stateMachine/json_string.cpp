@@ -67,7 +67,26 @@ void JsonString::resetPos(uint64_t p) {
         pre_c = 0;
     }
 }
+int JsonString::findNextStringValue(int& p_state, int state_value, std::string& s) {
+    if(bypassEmpty()) {
+        return 1;
+    }
+    if(bypassChar(':')) {
+        return 1;
+    }
+    if(cur_c == '"') {
+        inc();
+        p_state = state_value
+        s = "";
+        return 0;
+    } else {
+        return -1;
+    }
+}
 void JsonString::bypassValue() {
+    
+}
+void JsonString::bypassObjectInside() {
     
 }
 }

@@ -16,6 +16,10 @@ enum ACTIONSTATE {
     ACTIONSTATE_INTO_ACTION_OBJECT,
     ACTIONSTATE_SEARCH_KEY,
     ACTIONSTATE_SAVING_KEY,
+    ACTIONSTATE_SEARCH_A_VALUE,
+    ACTIONSTATE_SAVING_A_VALUE,
+    ACTIONSTATE_SEARCH_ST_VALUE,
+    ACTIONSTATE_SAVING_ST_VALUE,
     ACTIONSTATE_END,
 };
 typedef bool (*ActionStateMgrFuncPtr)(PacketStateMgr* mgr)
@@ -24,17 +28,23 @@ public:
     ActionStateMgr();
     void init(JsonString* jStr, MegaClient* cli);
     bool exec();
+    bool checkActionPacket();
     std::vector<ActionStateMgrFuncPtr> func_map;
     static bool begin_func(ActionStateMgr* mgr);
     static bool into_action_object_func(ActionStateMgr* mgr);
     static bool search_key(ActionStateMgr* mgr);
     static bool saving_key(ActionStateMgr* mgr);
+    static bool search_a_value(ActionStateMgr* mgr);
+    static bool saving_a_value(ActionStateMgr* mgr);
 public:
     JsonString* jsonString;
     MegaClient* client;
     string key;
     string value;
     ACTIONSTATE p_state;
+    bool is_in_checker = false;
+    bool is_check_bypass = false;
+    std::string cmd;
 };
 }
 

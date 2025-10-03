@@ -145,20 +145,8 @@ bool PacketStateMgr::saving_key_func(PacketStateMgr* mgr) {
     return true;
 }
 bool PacketStateMgr::save_w_value_pre_func(PacketStateMgr* mgr) {
-    if(mgr->jsonString->bypassEmpty()) {
-        return true;
-    }
-    if(mgr->jsonString->bypassChar(':')) {
-        return true;
-    }
-    if(mgr->jsonString->cur_c == '"') {
-        mgr->p_state = PACKETSTATE_SAVE_W_VALUE;
-        mgr->jsonString->inc();
-        mgr->client->scnotifyurl = "";
-        return true;
-    } else {
-        return false;
-    }
+    auto ret = mgr->jsonString->findNextStringValue(mgr->p_state, PACKETSTATE_SAVE_W_VALUE, mgr->client->scnotifyurl);
+    return (ret >= 0);
 }
 bool PacketStateMgr::save_w_value_func(PacketStateMgr* mgr) {
     if(mgr->jsonString->decodeString(mgr->client->scnotifyurl)) {
@@ -181,7 +169,7 @@ bool PacketStateMgr::save_nolast_pre_fun(PacketStateMgr* mgr) {
 }
 bool PacketStateMgr::save_nolast_func(PacketStateMgr* mgr) {
     mgr->client->insca_notlast = (mgr->jsonString->cur_c == '1');
-    mgr->p_state =
+    mgr->p_state = PACKETSTATE_SAVE_NOLAST_AFTER;
     mgr->jsonString->inc();
     return true;
 }
@@ -199,19 +187,8 @@ bool PacketStateMgr::save_nolast_after_func(PacketStateMgr* mgr) {
 }
 
 bool PacketStateMgr::save_sn_pre_func(PacketStateMgr* mgr) {
-    if(mgr->jsonString->bypassEmpty()) {
-        return true;
-    }
-    if(mgr->jsonString->bypassChar(':')) {
-        return true;
-    }
-    if(mgr->jsonString->cur_c == '"') {
-        mgr->p_state = ;
-        mgr->value = "";
-        mgr->jsonString->inc();
-        return true;
-    }
-    return false;
+    auto ret = mgr->jsonString->findNextStringValue(mgr->p_state, PACKETSTATE_SAVE_SN, mgr->client->value);
+    return (ret >= 0);
 }
 
 bool PacketStateMgr::save_sn_func(PacketStateMgr* mgr) {

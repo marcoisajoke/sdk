@@ -23,6 +23,9 @@ public:
     bool bypassChar(char c);
     void resetPos(uint64_t p);
     void bypassValue();
+    void bypassObjectInside();
+    int findNextStringValue(int& p_state, int state_value, std::string& s);
+    
     uint64_t pos;
     char cur_c = 0;
     char pre_c = 0;
