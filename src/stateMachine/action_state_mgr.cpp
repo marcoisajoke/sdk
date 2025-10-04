@@ -21,6 +21,25 @@ ActionStateMgr::ActionStateMgr() {
     func_map[ACTIONSTATE_SEARCH_A_VALUE] = ActionStateMgr::search_a_value;
     func_map[ACTIONSTATE_SAVING_A_VALUE] = ActionStateMgr::saving_a_value;
     func_map[ACTIONSTATE_SEARCH_ST_VALUE] = ActionStateMgr::search_st_value;
+    func_map[ACTIONSTATE_SAVING_ST_VALUE] = ActionStateMgr::saving_a_value;
+    func_map[ACTIONSTATE_SEARCH_N_VALUE] = ActionStateMgr::search_n_value;
+    func_map[ACTIONSTATE_SAVING_N_VALUE] = ActionStateMgr::saving_n_value;
+    func_map[ACTIONSTATE_SEARCH_U_VALUE] = ActionStateMgr::search_u_value;
+    func_map[ACTIONSTATE_SAVEING_U_VALUE] = ActionStateMgr::saving_u_value;
+    func_map[ACTIONSTATE_SEARCH_AT_VALUE] = ActionStateMgr::search_at_value;
+    func_map[ACTIONSTATE_SAVEING_AT_VALUE] = ActionStateMgr::saving_at_value;
+    func_map[ACTIONSTATE_SEARCH_TS_VALUE] = ActionStateMgr::search_ts_value;
+    func_map[ACTIONSTATE_SAVEING_TS_VALUE] = ActionStateMgr::saving_ts_value;
+    func_map[ACTIONSTATE_SEARCH_OU_VALUE] = ActionStateMgr::search_ou_value;
+    func_map[ACTIONSTATE_SAVEING_OU_VALUE] = ActionStateMgr::saving_ou_value;
+    func_map[ACTIONSTATE_SEARCH_P_VALUE] = ActionStateMgr::search_p_value;
+    func_map[ACTIONSTATE_SAVEING_P_VALUE] = ActionStateMgr::saving_p_value;
+    func_map[ACTIONSTATE_BYPASS_OP_VALUE] = ActionStateMgr::bypass_op_value;
+    func_map[ACTIONSTATE_SEARCH_O_VALUE] = ActionStateMgr::search_o_value;
+    func_map[ACTIONSTATE_SAVEING_O_VALUE] = ActionStateMgr::saving_o_value;
+    func_map[ACTIONSTATE_SEARCH_OK_VALUE] = ActionStateMgr::search_ok_value;
+    func_map[ACTIONSTATE_SAVEING_OK_VALUE] = ActionStateMgr::saving_ok_value;
+
 }
 void ActionStateMgr::init(JsonString* jStr, MegaClient* cli) {
     jsonString = jStr;
@@ -92,6 +111,9 @@ bool ActionStateMgr::search_key(ActionStateMgr* mgr) {
     if(mgr->jsonString->bypassEmpty()) {
         return true;
     }
+    if(mgr->jsonString->bypassChar(',')) {
+        return true;
+    }
     if(mgr->jsonString->cur_c == '"') {
         mgr->key = "";
         mgr->p_state = ACTIONSTATE_SAVING_KEY;
@@ -143,19 +165,6 @@ bool ActionStateMgr::checkCanRun() {
     }
     return true;
 }
-bool ActionStateMgr::key_a_func(ActionStateMgr* mgr) {
-    mgr->p_state = ACTIONSTATE_SEARCH_A_VALUE;
-    return true;
-}
-bool ActionStateMgr::key_i_func(ActionStateMgr* mgr) {
-    mgr->jsonString->bypassValue();
-    has_i = true;
-    return true;
-}
-bool ActionStateMgr::key_st_func(ActionStateMgr* mgr) {
-    mgr->p_state = ACTIONSTATE_SEARCH_ST_VALUE;
-    return true;
-}
 bool ActionStateMgr::saving_key(ActionStateMgr* mgr) {
     if(mgr->jsonString->decodeString(mgr->key)) {
         return true;
@@ -173,12 +182,12 @@ bool ActionStateMgr::saving_key(ActionStateMgr* mgr) {
             mgr->jsongString->bypassObjectInside();
             return true;
         }
-        auto itr = mgr->key_func.find(mgr->key);
+        auto itr = mgr->key_2_state.find(mgr->key);
         if(itr == mgr->key_func.end()) {
             mgr->jsonString->bypassValue();
             return true;
         }
-        itr.second(mgr);
+        mgr->p_state = itr.second;
     }
     return true;
 }
@@ -213,6 +222,109 @@ bool ActionStateMgr::saving_st_value(ActionStateMgr* mgr) {
     {
         mgr->client->fnstats.actionPackets++;
     }
+    mgr->pstate = ACTIONSTATE_SEARCH_KEY;
+    mgr->jsonString->inc();
+    return true;
+}
+bool ActionStateMgr::search_n_value(ActionStateMgr* mgr) {
+    auto ret = mgr->jsonString->findNextStringValue(mgr->p_state, ACTIONSTATE_SAVING_N_VALUE, mgr->value);
+    return (ret >= 0);
+}
+bool ActionStateMgr::saving_n_value(ActionStateMgr* mgr) {
+    mgr->key_n = mgr->jsonString->getHandler();
+    mgr->pstate = ACTIONSTATE_SEARCH_KEY;
+    return true;
+
+}
+bool ActionStateMgr::search_u_value(ActionStateMgr* mgr) {
+    auto ret = mgr->jsonString->findNextStringValue(mgr->p_state, ACTIONSTATE_SAVING_U_VALUE, mgr->key_u);
+    return (ret >= 0);
+}
+bool ActionStateMgr::saving_u_value(ActionStateMgr* mgr) {
+    if(mgr->jsonString->decodeString(mgr->key_u)) {
+        return true;
+    }
+    mgr->pstate = ACTIONSTATE_SEARCH_KEY;
+    mgr->jsonString->inc();
+    return true;
+}
+bool ActionStateMgr::search_at_value(ActionStateMgr* mgr) {
+    auto ret = mgr->jsonString->findNextStringValue(mgr->p_state, ACTIONSTATE_SAVING_AT_VALUE, mgr->key_at);
+    return (ret >= 0);
+}
+bool ActionStateMgr::saving_at_value(ActionStateMgr* mgr) {
+    if(mgr->jsonString->decodeString(mgr->key_at)) {
+        return true;
+    }
+    mgr->pstate = ACTIONSTATE_SEARCH_KEY;
+    mgr->jsonString->inc();
+    return true;
+}
+bool ActionStateMgr::search_ts_value(ActionStateMgr* mgr) {
+    if(mgr->jsonString->bypassEmpty()) {
+        return true;
+    }
+    if('0' <= cur_c && cur_c <= '9') {
+        mgr->key_ts = 0;
+        mgr->p_state = ACTIONSTATE_SAVING_TS_VALUE;
+        return true;
+    }
+    if(cur_c == '-') {
+        mgr->key_ts = -1;
+        return true;
+    }
+    return false;
+}
+bool ActionStateMgr::saving_ts_value(ActionStateMgr* mgr) {
+    if(mgr->jsonString->decodeInt64(mgr->key_ts)) {
+        return true;
+    }
+    mgr->pstate = ACTIONSTATE_SEARCH_KEY;
+    return true;
+}
+bool ActionStateMgr::search_ou_value(ActionStateMgr* mgr) {
+    auto ret = mgr->jsonString->findNextStringValue(mgr->p_state, ACTIONSTATE_SAVING_OU_VALUE, mgr->value);
+    return (ret >= 0);
+}
+bool ActionStateMgr::saving_ou_value(ActionStateMgr* mgr) {
+    mgr->key_ou = mgr->jsonString->getHandler(USERHANDLE);
+    mgr->pstate = ACTIONSTATE_SEARCH_KEY;
+    return true;
+}
+bool ActionStateMgr::search_p_value(ActionStateMgr* mgr) {
+    auto ret = mgr->jsonString->findNextStringValue(mgr->p_state, ACTIONSTATE_SAVING_P_VALUE, mgr->value);
+    return (ret >= 0);
+}
+bool ActionStateMgr::saving_p_value(ActionStateMgr* mgr) {
+    mgr->key_p = mgr->jsonString->getHandler(PCRHANDLE);
+    mgr->pstate = ACTIONSTATE_SEARCH_KEY;
+    return true;
+}
+bool ActionStateMgr::bypass_op_value(ActionStateMgr* mgr) {
+    mgr->key_op = true;
+    mgr->jsonString->bypassValue();
+    mgr->pstate = ACTIONSTATE_SEARCH_KEY;
+    return true;
+}
+bool ActionStateMgr::search_o_value(ActionStateMgr* mgr) {
+    auto ret = mgr->jsonString->findNextStringValue(mgr->p_state, ACTIONSTATE_SAVING_O_VALUE, mgr->value);
+    return (ret >= 0);
+}
+bool ActionStateMgr::saving_o_value(ActionStateMgr* mgr) {
+    mgr->key_o = mgr->jsonString->getHandler(USERHANDLE);
+    mgr->pstate = ACTIONSTATE_SEARCH_KEY;
+    return true;
+}
+bool ActionStateMgr::search_ok_value(ActionStateMgr* mgr) {
+    auto ret = mgr->jsonString->findNextStringValue(mgr->p_state, ACTIONSTATE_SAVING_AT_VALUE, mgr->key_ok);
+    return (ret >= 0);
+}
+bool ActionStateMgr::saving_ok_value(ActionStateMgr* mgr) {
+    if(mgr->jsonString->decodeString(mgr->key_ok)) {
+        return true;
+    }
+    mgr->pstate = ACTIONSTATE_SEARCH_KEY;
+    mgr->jsonString->inc();
     return true;
 }
 }

@@ -56,6 +56,13 @@ bool JsonString::bypassChar(char c) {
     }
     return false;
 }
+bool JsonString::decodeInt64(int64_t& ret) {
+    if('0' <= cur_c && cur_c <= '9') {
+        ret = ret*10 + cur_c - '0';
+        return true;
+    } 
+    return false;
+}
 void JsonString::resetPos(uint64_t p) {
     pos = p;
     if(pos < size) {
@@ -81,6 +88,23 @@ int JsonString::findNextStringValue(int& p_state, int state_value, std::string& 
         return 0;
     } else {
         return -1;
+    }
+}
+handle JsonString::getHandler(int size) {
+    byte buf[9] = { 0 };
+    auto l = Base64::atob(pos + 1, buf, sizeof(buf));
+    if(l != size) {
+        return UNDEF;
+    }
+    bypassString();
+    return MemAccess::get<handle>((const char*)buf);
+}
+void JsonString::bypassString() {
+    if(str[pos] == '"') {
+        pos++;
+    }
+    while(pos < size && str[pos] == '"' && str[pos-1] != '\\') {
+        pos++;
     }
 }
 void JsonString::bypassValue() {

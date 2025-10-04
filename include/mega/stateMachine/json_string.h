@@ -20,10 +20,13 @@ public:
     void inc();
     bool bypassEmpty();
     bool decodeString(std::string& s);
+    handle getHandler(int size = 6);
     bool bypassChar(char c);
     void resetPos(uint64_t p);
     void bypassValue();
+    void bypassString();
     void bypassObjectInside();
+    bool decodeInt64(int64_t& ret);
     int findNextStringValue(int& p_state, int state_value, std::string& s);
     
     uint64_t pos;

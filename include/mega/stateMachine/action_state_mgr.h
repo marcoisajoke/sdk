@@ -8,7 +8,11 @@
 
 #ifndef ACTION_STATE_MGR_H
 #define ACTION_STATE_MGR_H 1
+#include <unordered_set>
+
 #include "mega/stateMachine/json_string.h"
+#include "mega/version.h"
+#include "mega/types.h"
 
 namespace mega {
 enum ACTIONSTATE {
@@ -18,11 +22,31 @@ enum ACTIONSTATE {
     ACTIONSTATE_SAVING_KEY,
     ACTIONSTATE_SEARCH_A_VALUE,
     ACTIONSTATE_SAVING_A_VALUE,
+    ACTIONSTATE_SEARCH_I_VALUE, //do something
     ACTIONSTATE_SEARCH_ST_VALUE,
     ACTIONSTATE_SAVING_ST_VALUE,
+    ACTIONSTATE_SEARCH_N_VALUE,
+    ACTIONSTATE_SAVEING_N_VALUE,
+    ACTIONSTATE_SEARCH_U_VALUE,
+    ACTIONSTATE_SAVEING_U_VALUE,
+    ACTIONSTATE_SEARCH_AT_VALUE,
+    ACTIONSTATE_SAVEING_AT_VALUE,
+    ACTIONSTATE_SEARCH_TS_VALUE,
+    ACTIONSTATE_SAVEING_TS_VALUE,
+    ACTIONSTATE_SEARCH_OU_VALUE,
+    ACTIONSTATE_SAVEING_OU_VALUE,
+    ACTIONSTATE_SEARCH_P_VALUE,
+    ACTIONSTATE_SAVEING_P_VALUE,
+    ACTIONSTATE_BYPASS_OP_VALUE,
+    ACTIONSTATE_SEARCH_O_VALUE,
+    ACTIONSTATE_SAVEING_O_VALUE,
+    ACTIONSTATE_SEARCH_OK_VALUE,
+    ACTIONSTATE_SAVEING_OK_VALUE,
     ACTIONSTATE_END,
 };
-typedef bool (*ActionStateMgrFuncPtr)(PacketStateMgr* mgr);
+class MegaClient;
+class ActionStateMgr;
+typedef bool (*ActionStateMgrFuncPtr)(ActionStateMgr* mgr);
 typedef bool (*ActionStateKeyFuncPtr)(ActionStateMgr* mgr);
 class ActionStateMgr {
 public:
@@ -42,39 +66,69 @@ public:
     static bool saving_a_value(ActionStateMgr* mgr);
     static bool search_st_value(ActionStateMgr* mgr);
     static bool saving_st_value(ActionStateMgr* mgr);
+    static bool search_n_value(ActionStateMgr* mgr);
+    static bool saving_n_value(ActionStateMgr* mgr);
+    static bool search_u_value(ActionStateMgr* mgr);
+    static bool saving_u_value(ActionStateMgr* mgr);
+    static bool search_at_value(ActionStateMgr* mgr);
+    static bool saving_at_value(ActionStateMgr* mgr);
+    static bool search_ou_value(ActionStateMgr* mgr);
+    static bool saving_ou_value(ActionStateMgr* mgr);
+    static bool search_p_value(ActionStateMgr* mgr);
+    static bool saving_p_value(ActionStateMgr* mgr);
+    static bool bypass_op_value(ActionStateMgr* mgr);
+    static bool search_o_value(ActionStateMgr* mgr);
+    static bool saving_o_value(ActionStateMgr* mgr);
+    static bool search_ok_value(ActionStateMgr* mgr);
+    static bool saving_ok_value(ActionStateMgr* mgr);
     /*action state function end*/
     
-    /*key function begin*/
-    static bool key_a_func(ActionStateMgr* mgr);
-    static bool key_i_func(ActionStateMgr* mgr);
-    static bool key_st_func(ActionStateMgr* mgr);
-    
-    /*key function end*/
     
 public:
     JsonString* jsonString;
     MegaClient* client;
-    string key;
-    string value;
+    std::string key;
+    std::string value;
     ACTIONSTATE p_state;
     bool has_i = false;
     bool is_in_checker = false;
     bool is_check_bypass = false;
     std::string cmd;
+
+    //////////////////////////////////////////////
+    /*keys cache begin*/
+    handle key_n = UNDEF;
+    std::string key_u;
+    std::string key_at;
+    int64_t key_ts;
+    handle key_ou;
+    handle key_p;
+    bool key_op;
+    handle key_o;
+    std::string key_ok;
+    /*keys cache end*/
+    //////////////////////////////////////////////
+
     std::unordered_set<std::string>* keys_ptr = nullptr;
     
-    std::unordered_map<std::string, ActionStateKeyFuncPtr> key_func = {
-        {"a", ActionStateMgr::key_a_func},
-        {"i", ActionStateMgr::key_i_func},
-        {"st", ActionStateMgr::key_st_func},
-        
-        
+    std::unordered_map<std::string, ACTIONSTATE> key_2_state = {
+        {"a", ACTIONSTATE_SEARCH_A_VALUE},
+        {"i", ACTIONSTATE_SEARCH_I_VALUE},
+        {"st", ACTIONSTATE_SEARCH_ST_VALUE},
+        {"n", ACTIONSTATE_SEARCH_N_VALUE},
+        {"at", ACTIONSTATE_SEARCH_AT_VALUE},
+        {"ts", ACTIONSTATE_SEARCH_TS_VALUE},
+        {"ou", ACTIONSTATE_SEARCH_OU_VALUE},
+        {"p", ACTIONSTATE_SEARCH_P_VALUE},
+        {"op", ACTIONSTATE_BYPASS_OP_VALUE},
+        {"o", ACTIONSTATE_SEARCH_O_VALUE},
+        {"ok", ACTIONSTATE_SEARCH_OK_VALUE},
     };
     
     std::unordered_map<std::string, std::unordered_set<std::string>> cmd_keys = {
         {"u",       {"n", "u", "at", "ts"}},
         {"t",       {"t"/*go tree*/, "u", "ou"}},
-        {"d",       {"p", "op", "n", "o", "u", "ou", "ok", "okd", "ha", "r", "ts", "k"}},
+        {"d",       {"n", "ou"}},
         {"s",       {"p", "op", "n", "o", "u", "ou", "ok", "okd", "ha", "r", "ts", "k"}},
         {"s2",      {"p", "op", "n", "o", "u", "ou", "ok", "okd", "ha", "r", "ts", "k"}},
         {"c",       {"u", "ou"}},
