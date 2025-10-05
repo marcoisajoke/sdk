@@ -8,7 +8,7 @@
 
 #ifndef MEGA_JSON_STRING_H
 #define MEGA_JSON_STRING_H 1
-
+#include <string>
 
 namespace mega {
 
@@ -27,7 +27,10 @@ public:
     void bypassString();
     void bypassObjectInside();
     bool decodeInt64(int64_t& ret);
+    bool decodeInt32(int32_t& ret);
     int findNextStringValue(int& p_state, int state_value, std::string& s);
+    bool findNextInt32(int& p_state, int state_vallue, int32_t& i);
+    bool findNextInt64(int& p_state, int state_vallue, int64_t& i);
     
     uint64_t pos;
     char cur_c = 0;

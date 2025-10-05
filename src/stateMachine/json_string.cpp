@@ -42,7 +42,7 @@ bool JsonString::bypassEmpty() {
 bool JsonString::decodeString(std::string& s) {
     if(cur_c != '"' || pre_c == '\\') {
         pre_c = cur_c;
-        s.append(cur_c);
+        s.append(std::to_string(cur_c));
         inc();
         return true;
     }
@@ -57,6 +57,13 @@ bool JsonString::bypassChar(char c) {
     return false;
 }
 bool JsonString::decodeInt64(int64_t& ret) {
+    if('0' <= cur_c && cur_c <= '9') {
+        ret = ret*10 + cur_c - '0';
+        return true;
+    } 
+    return false;
+}
+bool JsonString::decodeInt32(int32_t& ret) {
     if('0' <= cur_c && cur_c <= '9') {
         ret = ret*10 + cur_c - '0';
         return true;
@@ -83,12 +90,42 @@ int JsonString::findNextStringValue(int& p_state, int state_value, std::string& 
     }
     if(cur_c == '"') {
         inc();
-        p_state = state_value
+        p_state = state_value;
         s = "";
         return 0;
     } else {
         return -1;
     }
+}
+bool JsonString::findNextInt32(int& p_state, int state_vallue, int32_t& i) {
+    if(bypassEmpty()) {
+        return true;
+    }
+    if('0' <= cur_c && cur_c <= '9') {
+        i = 0;
+        p_state = state_vallue;
+        return true;
+    }
+    if(cur_c == '-') {
+        i = -1;
+        return true;
+    }
+    return false;
+}
+bool JsonString::findNextInt64(int& p_state, int state_vallue, int64_t& i) {
+    if(bypassEmpty()) {
+        return true;
+    }
+    if('0' <= cur_c && cur_c <= '9') {
+        i = 0;
+        p_state = state_vallue;
+        return true;
+    }
+    if(cur_c == '-') {
+        i = -1;
+        return true;
+    }
+    return false;
 }
 handle JsonString::getHandler(int size) {
     byte buf[9] = { 0 };

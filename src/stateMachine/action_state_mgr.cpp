@@ -6,7 +6,7 @@
 //
 
 
-#include "mega/stteMachine/action_state_mgr.h"
+#include "mega/stateMachine/action_state_mgr.h"
 
 
 namespace mega {
@@ -16,30 +16,18 @@ ActionStateMgr::ActionStateMgr() {
     client = nullptr;
     func_map.resize(ACTIONSTATE_END + 1);
     func_map[ACTIONSTATE_BEGIN] = ActionStateMgr::begin_func;
+    func_map[ACTIONSTATE_INTO_ACTION_OBJECT] = ActionStateMgr::into_action_object_func;
     func_map[ACTIONSTATE_SEARCH_KEY] = ActionStateMgr::search_key;
     func_map[ACTIONSTATE_SAVING_KEY] = ActionStateMgr::saving_key;
-    func_map[ACTIONSTATE_SEARCH_A_VALUE] = ActionStateMgr::search_a_value;
-    func_map[ACTIONSTATE_SAVING_A_VALUE] = ActionStateMgr::saving_a_value;
     func_map[ACTIONSTATE_SEARCH_ST_VALUE] = ActionStateMgr::search_st_value;
-    func_map[ACTIONSTATE_SAVING_ST_VALUE] = ActionStateMgr::saving_a_value;
-    func_map[ACTIONSTATE_SEARCH_N_VALUE] = ActionStateMgr::search_n_value;
-    func_map[ACTIONSTATE_SAVING_N_VALUE] = ActionStateMgr::saving_n_value;
-    func_map[ACTIONSTATE_SEARCH_U_VALUE] = ActionStateMgr::search_u_value;
-    func_map[ACTIONSTATE_SAVEING_U_VALUE] = ActionStateMgr::saving_u_value;
-    func_map[ACTIONSTATE_SEARCH_AT_VALUE] = ActionStateMgr::search_at_value;
-    func_map[ACTIONSTATE_SAVEING_AT_VALUE] = ActionStateMgr::saving_at_value;
-    func_map[ACTIONSTATE_SEARCH_TS_VALUE] = ActionStateMgr::search_ts_value;
-    func_map[ACTIONSTATE_SAVEING_TS_VALUE] = ActionStateMgr::saving_ts_value;
-    func_map[ACTIONSTATE_SEARCH_OU_VALUE] = ActionStateMgr::search_ou_value;
-    func_map[ACTIONSTATE_SAVEING_OU_VALUE] = ActionStateMgr::saving_ou_value;
-    func_map[ACTIONSTATE_SEARCH_P_VALUE] = ActionStateMgr::search_p_value;
-    func_map[ACTIONSTATE_SAVEING_P_VALUE] = ActionStateMgr::saving_p_value;
-    func_map[ACTIONSTATE_BYPASS_OP_VALUE] = ActionStateMgr::bypass_op_value;
-    func_map[ACTIONSTATE_SEARCH_O_VALUE] = ActionStateMgr::search_o_value;
-    func_map[ACTIONSTATE_SAVEING_O_VALUE] = ActionStateMgr::saving_o_value;
-    func_map[ACTIONSTATE_SEARCH_OK_VALUE] = ActionStateMgr::search_ok_value;
-    func_map[ACTIONSTATE_SAVEING_OK_VALUE] = ActionStateMgr::saving_ok_value;
-
+    func_map[ACTIONSTATE_SAVING_ST_VALUE] = ActionStateMgr::saving_st_value;
+    func_map[ACTIONSTATE_SEARCH_STRING_VALUE] = ActionStateMgr::search_string_value;
+    func_map[ACTIONSTATE_SAVING_STRING_VALUE] = ActionStateMgr::saving_string_value;
+    func_map[ACTIONSTATE_SEARCH_INT64_VALUE] = ActionStateMgr::search_int64_value;
+    func_map[ACTIONSTATE_SAVING_INT64_VALUE] = ActionStateMgr::saving_int64_value;
+    func_map[ACTIONSTATE_SEARCH_ARRAY_OF_STRING_VALUE] = ActionStateMgr::search_arrayOfString_value;
+    func_map[ACTIONSTATE_SEARCH_ARRAY_OF_STRING_STRING_VALUE] = ActionStateMgr::search_arrayOfString_string_value;
+    func_map[ACTIONSTATE_SAVING_ARRAY_OP_STRING_VALUE] = ActionStateMgr::saving_arrayOfString_value;
 }
 void ActionStateMgr::init(JsonString* jStr, MegaClient* cli) {
     jsonString = jStr;
@@ -185,18 +173,31 @@ bool ActionStateMgr::saving_key(ActionStateMgr* mgr) {
         auto itr = mgr->key_2_state.find(mgr->key);
         if(itr == mgr->key_func.end()) {
             mgr->jsonString->bypassValue();
+            cur_data = nullptr;
             return true;
         }
-        mgr->p_state = itr.second;
+        mgr->cur_data = &itr->second;
+        mgr->p_state = mgr->cur_data->search_state
     }
     return true;
 }
-bool ActionStateMgr::search_a_value(ActionStateMgr* mgr) {
-    auto ret = mgr->jsonString->findNextStringValue(mgr->p_state, ACTIONSTATE_SAVING_A_VALUE, mgr->cmd);
+bool ActionStateMgr::search_int64_value(ActionStateMgr* mgr) {
+    return mgr->jsonString->findNextInt64(mgr->p_state, ACTIONSTATE_SAVING_INT64_VALUE, *((int64_t*)(mgr->cur_data->value)));
+}
+bool ActionStateMgr::saving_int64_value(ActionStateMgr* mgr) {
+    if(mgr->jsonString->decodeInt64(*((int64_t*)(mgr->cur_data->value)))) {
+        return true;
+    }
+    mgr->pstate = ACTIONSTATE_SEARCH_KEY;
+    mgr->jsonString->inc();
+    return true;
+}
+bool ActionStateMgr::search_string_value(ActionStateMgr* mgr) {
+    auto ret = mgr->jsonString->findNextStringValue(mgr->p_state, ACTIONSTATE_SAVING_STRING_VALUE, *((std::string*)(mgr->cur_data->value)));
     return (ret >= 0);
 }
-bool ActionStateMgr::saving_a_value(ActionStateMgr* mgr) {
-    if(mgr->jsonString->decodeString(mgr->cmd)) {
+bool ActionStateMgr::saving_string_value(ActionStateMgr* mgr) {
+    if(mgr->jsonString->decodeString(*((std::string*)(mgr->cur_data->value)))) {
         return true;
     }
     mgr->pstate = ACTIONSTATE_SEARCH_KEY;
@@ -226,105 +227,52 @@ bool ActionStateMgr::saving_st_value(ActionStateMgr* mgr) {
     mgr->jsonString->inc();
     return true;
 }
-bool ActionStateMgr::search_n_value(ActionStateMgr* mgr) {
-    auto ret = mgr->jsonString->findNextStringValue(mgr->p_state, ACTIONSTATE_SAVING_N_VALUE, mgr->value);
-    return (ret >= 0);
-}
-bool ActionStateMgr::saving_n_value(ActionStateMgr* mgr) {
-    mgr->key_n = mgr->jsonString->getHandler();
-    mgr->pstate = ACTIONSTATE_SEARCH_KEY;
-    return true;
-
-}
-bool ActionStateMgr::search_u_value(ActionStateMgr* mgr) {
-    auto ret = mgr->jsonString->findNextStringValue(mgr->p_state, ACTIONSTATE_SAVING_U_VALUE, mgr->key_u);
-    return (ret >= 0);
-}
-bool ActionStateMgr::saving_u_value(ActionStateMgr* mgr) {
-    if(mgr->jsonString->decodeString(mgr->key_u)) {
-        return true;
-    }
-    mgr->pstate = ACTIONSTATE_SEARCH_KEY;
-    mgr->jsonString->inc();
-    return true;
-}
-bool ActionStateMgr::search_at_value(ActionStateMgr* mgr) {
-    auto ret = mgr->jsonString->findNextStringValue(mgr->p_state, ACTIONSTATE_SAVING_AT_VALUE, mgr->key_at);
-    return (ret >= 0);
-}
-bool ActionStateMgr::saving_at_value(ActionStateMgr* mgr) {
-    if(mgr->jsonString->decodeString(mgr->key_at)) {
-        return true;
-    }
-    mgr->pstate = ACTIONSTATE_SEARCH_KEY;
-    mgr->jsonString->inc();
-    return true;
-}
-bool ActionStateMgr::search_ts_value(ActionStateMgr* mgr) {
+bool ActionStateMgr::search_arrayOfString_value(ActionStateMgr* mgr) {
     if(mgr->jsonString->bypassEmpty()) {
         return true;
     }
-    if('0' <= cur_c && cur_c <= '9') {
-        mgr->key_ts = 0;
-        mgr->p_state = ACTIONSTATE_SAVING_TS_VALUE;
+    if(mgr->jsonString->bypassChar(':')) {
         return true;
     }
-    if(cur_c == '-') {
-        mgr->key_ts = -1;
+    if(mgr->jsonString->cur_c == '[') {
+        mgr->jsonString->inc();
+        mgr->p_state = ACTIONSTATE_SEARCH_ARRAY_OF_STRING_STRING_VALUE;
+        std::vector<std::string>* v = (std::vector<std::string>*)(mgr->cur_data->value);
+        v->clear();
         return true;
     }
     return false;
 }
-bool ActionStateMgr::saving_ts_value(ActionStateMgr* mgr) {
-    if(mgr->jsonString->decodeInt64(mgr->key_ts)) {
+bool ActionStateMgr::search_arrayOfString_string_value(ActionStateMgr* mgr) {
+    if(mgr->jsonString->bypassEmpty()) {
         return true;
     }
-    mgr->pstate = ACTIONSTATE_SEARCH_KEY;
-    return true;
-}
-bool ActionStateMgr::search_ou_value(ActionStateMgr* mgr) {
-    auto ret = mgr->jsonString->findNextStringValue(mgr->p_state, ACTIONSTATE_SAVING_OU_VALUE, mgr->value);
-    return (ret >= 0);
-}
-bool ActionStateMgr::saving_ou_value(ActionStateMgr* mgr) {
-    mgr->key_ou = mgr->jsonString->getHandler(USERHANDLE);
-    mgr->pstate = ACTIONSTATE_SEARCH_KEY;
-    return true;
-}
-bool ActionStateMgr::search_p_value(ActionStateMgr* mgr) {
-    auto ret = mgr->jsonString->findNextStringValue(mgr->p_state, ACTIONSTATE_SAVING_P_VALUE, mgr->value);
-    return (ret >= 0);
-}
-bool ActionStateMgr::saving_p_value(ActionStateMgr* mgr) {
-    mgr->key_p = mgr->jsonString->getHandler(PCRHANDLE);
-    mgr->pstate = ACTIONSTATE_SEARCH_KEY;
-    return true;
-}
-bool ActionStateMgr::bypass_op_value(ActionStateMgr* mgr) {
-    mgr->key_op = true;
-    mgr->jsonString->bypassValue();
-    mgr->pstate = ACTIONSTATE_SEARCH_KEY;
-    return true;
-}
-bool ActionStateMgr::search_o_value(ActionStateMgr* mgr) {
-    auto ret = mgr->jsonString->findNextStringValue(mgr->p_state, ACTIONSTATE_SAVING_O_VALUE, mgr->value);
-    return (ret >= 0);
-}
-bool ActionStateMgr::saving_o_value(ActionStateMgr* mgr) {
-    mgr->key_o = mgr->jsonString->getHandler(USERHANDLE);
-    mgr->pstate = ACTIONSTATE_SEARCH_KEY;
-    return true;
-}
-bool ActionStateMgr::search_ok_value(ActionStateMgr* mgr) {
-    auto ret = mgr->jsonString->findNextStringValue(mgr->p_state, ACTIONSTATE_SAVING_AT_VALUE, mgr->key_ok);
-    return (ret >= 0);
-}
-bool ActionStateMgr::saving_ok_value(ActionStateMgr* mgr) {
-    if(mgr->jsonString->decodeString(mgr->key_ok)) {
+
+    if(mgr->jsonString->cur_c == '"') {
+        mgr->value = "";
+        mgr->jsonString->inc();
+        return true;    
+    }
+    if(mgr->jsonString->cur_c == ']') {
+        mgr->pstate = ACTIONSTATE_SEARCH_KEY;
+        mgr->jsonString->inc();
         return true;
     }
-    mgr->pstate = ACTIONSTATE_SEARCH_KEY;
+
+    return false;
+}
+bool ActionStateMgr::saving_arrayOfString_value(ActionStateMgr* mgr) {
+    if(mgr->jsonString->decodeString(mgr->value)) {
+        return true;
+    }
+    if(mgr->value.length() > 0) {
+        ((std::vector<std::string>*)(mgr->cur_data->value))->push_back(mgr->value);
+    }
+    mgr->value.clear();
+    mgr->p_state = ACTIONSTATE_SEARCH_ARRAY_OF_STRING_STRING_VALUE;
     mgr->jsonString->inc();
     return true;
+
 }
+
 }

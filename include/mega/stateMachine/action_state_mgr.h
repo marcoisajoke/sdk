@@ -20,30 +20,31 @@ enum ACTIONSTATE {
     ACTIONSTATE_INTO_ACTION_OBJECT,
     ACTIONSTATE_SEARCH_KEY,
     ACTIONSTATE_SAVING_KEY,
-    ACTIONSTATE_SEARCH_A_VALUE,
-    ACTIONSTATE_SAVING_A_VALUE,
-    ACTIONSTATE_SEARCH_I_VALUE, //do something
     ACTIONSTATE_SEARCH_ST_VALUE,
     ACTIONSTATE_SAVING_ST_VALUE,
-    ACTIONSTATE_SEARCH_N_VALUE,
-    ACTIONSTATE_SAVEING_N_VALUE,
-    ACTIONSTATE_SEARCH_U_VALUE,
-    ACTIONSTATE_SAVEING_U_VALUE,
-    ACTIONSTATE_SEARCH_AT_VALUE,
-    ACTIONSTATE_SAVEING_AT_VALUE,
-    ACTIONSTATE_SEARCH_TS_VALUE,
-    ACTIONSTATE_SAVEING_TS_VALUE,
-    ACTIONSTATE_SEARCH_OU_VALUE,
-    ACTIONSTATE_SAVEING_OU_VALUE,
-    ACTIONSTATE_SEARCH_P_VALUE,
-    ACTIONSTATE_SAVEING_P_VALUE,
-    ACTIONSTATE_BYPASS_OP_VALUE,
-    ACTIONSTATE_SEARCH_O_VALUE,
-    ACTIONSTATE_SAVEING_O_VALUE,
-    ACTIONSTATE_SEARCH_OK_VALUE,
-    ACTIONSTATE_SAVEING_OK_VALUE,
+    ACTIONSTATE_SEARCH_INT64_VALUE,
+    ACTIONSTATE_SAVING_INT64_VALUE,
+    ACTIONSTATE_SEARCH_STRING_VALUE,
+    ACTIONSTATE_SAVING_STRING_VALUE,
+    ACTIONSTATE_SEARCH_ARRAY_OF_STRING_VALUE,
+    ACTIONSTATE_SEARCH_ARRAY_OF_STRING_STRING_VALUE,
+    ACTIONSTATE_SAVING_ARRAY_OP_STRING_VALUE,
     ACTIONSTATE_END,
 };
+enum ACTIONSTATE_VALUE_TYPE {
+    VALUE_TYPE_INT64,
+    VALUE_TYPE_STRING,
+}
+class KeyStateData {
+public:
+    KeyStateData(ACTIONSTATE search_s, void* v) {
+        search_state = search_s;
+        value = v;
+    }
+    ACTIONSTATE search_state;
+    void* value;
+};
+
 class MegaClient;
 class ActionStateMgr;
 typedef bool (*ActionStateMgrFuncPtr)(ActionStateMgr* mgr);
@@ -62,25 +63,15 @@ public:
     static bool into_action_object_func(ActionStateMgr* mgr);
     static bool search_key(ActionStateMgr* mgr);
     static bool saving_key(ActionStateMgr* mgr);
-    static bool search_a_value(ActionStateMgr* mgr);
-    static bool saving_a_value(ActionStateMgr* mgr);
+    static bool search_string_value(ActionStateMgr* mgr);
+    static bool saving_string_value(ActionStateMgr* mgr);
+    static bool search_int64_value(ActionStateMgr* mgr);
+    static bool saving_int64_value(ActionStateMgr* mgr);
     static bool search_st_value(ActionStateMgr* mgr);
     static bool saving_st_value(ActionStateMgr* mgr);
-    static bool search_n_value(ActionStateMgr* mgr);
-    static bool saving_n_value(ActionStateMgr* mgr);
-    static bool search_u_value(ActionStateMgr* mgr);
-    static bool saving_u_value(ActionStateMgr* mgr);
-    static bool search_at_value(ActionStateMgr* mgr);
-    static bool saving_at_value(ActionStateMgr* mgr);
-    static bool search_ou_value(ActionStateMgr* mgr);
-    static bool saving_ou_value(ActionStateMgr* mgr);
-    static bool search_p_value(ActionStateMgr* mgr);
-    static bool saving_p_value(ActionStateMgr* mgr);
-    static bool bypass_op_value(ActionStateMgr* mgr);
-    static bool search_o_value(ActionStateMgr* mgr);
-    static bool saving_o_value(ActionStateMgr* mgr);
-    static bool search_ok_value(ActionStateMgr* mgr);
-    static bool saving_ok_value(ActionStateMgr* mgr);
+    static bool search_arrayOfString_value(ActionStateMgr* mgr);
+    static bool search_arrayOfString_string_value(ActionStateMgr* mgr);
+    static bool saving_arrayOfString_value(ActionStateMgr* mgr);
     /*action state function end*/
     
     
@@ -93,36 +84,54 @@ public:
     bool has_i = false;
     bool is_in_checker = false;
     bool is_check_bypass = false;
+    KeyStateData* cur_data;
     std::string cmd;
 
     //////////////////////////////////////////////
     /*keys cache begin*/
-    handle key_n = UNDEF;
-    std::string key_u;
+    std::string key_a;
+    std::string key_i;
+    std::string key_st;
+    std::string key_n;
+    std::string key_u;  //sc_contacts() is array of object. implement after a while
     std::string key_at;
     int64_t key_ts;
-    handle key_ou;
-    handle key_p;
+    std::string key_ou;
+    std::string key_p;
     bool key_op;
-    handle key_o;
+    std::string key_o;
     std::string key_ok;
+    int64_t key_okd;
+    std::string key_ha;
+    int64_t key_r;
+    std::string key_k;
+    std::string key_fa;
+    std::vector<std::string> key_ua;
     /*keys cache end*/
     //////////////////////////////////////////////
 
     std::unordered_set<std::string>* keys_ptr = nullptr;
     
-    std::unordered_map<std::string, ACTIONSTATE> key_2_state = {
-        {"a", ACTIONSTATE_SEARCH_A_VALUE},
-        {"i", ACTIONSTATE_SEARCH_I_VALUE},
-        {"st", ACTIONSTATE_SEARCH_ST_VALUE},
-        {"n", ACTIONSTATE_SEARCH_N_VALUE},
-        {"at", ACTIONSTATE_SEARCH_AT_VALUE},
-        {"ts", ACTIONSTATE_SEARCH_TS_VALUE},
-        {"ou", ACTIONSTATE_SEARCH_OU_VALUE},
-        {"p", ACTIONSTATE_SEARCH_P_VALUE},
-        {"op", ACTIONSTATE_BYPASS_OP_VALUE},
-        {"o", ACTIONSTATE_SEARCH_O_VALUE},
-        {"ok", ACTIONSTATE_SEARCH_OK_VALUE},
+    
+    std::unordered_map<std::string, KeyStateData> key_2_state = {
+        {"a", KeyStateData(ACTIONSTATE_SEARCH_STRING_VALUE, &cmd)},
+        {"i", KeyStateData(ACTIONSTATE_SEARCH_STRING_VALUE, &key_i)},
+        {"st", KeyStateData(ACTIONSTATE_SEARCH_ST_VALUE, &key_st)},
+        {"n", KeyStateData(ACTIONSTATE_SEARCH_STRING_VALUE, &key_n)},
+        {"u", KeyStateData(ACTIONSTATE_SEARCH_STRING_VALUE, &key_u)},
+        {"at", KeyStateData(ACTIONSTATE_SEARCH_STRING_VALUE,  &key_at)},
+        {"ts", KeyStateData(ACTIONSTATE_SEARCH_INT64_VALUE, &key_ts)},
+        {"ou", KeyStateData(ACTIONSTATE_SEARCH_STRING_VALUE, &key_ou)},
+        {"p", KeyStateData(ACTIONSTATE_SEARCH_STRING_VALUE, &key_p)},
+        {"op", KeyStateData(ACTIONSTATE_SEARCH_STRING_VALUE, &key_op)},
+        {"o", KeyStateData(ACTIONSTATE_SEARCH_STRING_VALUE, &key_o)},
+        {"ok", KeyStateData(ACTIONSTATE_SEARCH_INT64_VALUE, &key_ok)},
+        {"okd", KeyStateData(ACTIONSTATE_SEARCH_STRING_VALUE, &key_okd)},
+        {"ha", KeyStateData(ACTIONSTATE_SEARCH_STRING_VALUE, &key_ha)},
+        {"r", KeyStateData(ACTIONSTATE_SEARCH_INT64_VALUE, &key_r)},
+        {"k", KeyStateData(ACTIONSTATE_SEARCH_STRING_VALUE, &key_k)},
+        {"fa", KeyStateData(ACTIONSTATE_SEARCH_STRING_VALUE, &key_fa)},
+        {"ua", KeyStateData(ACTIONSTATE_SEARCH_ARRAY_OF_STRING_VALUE, &key_ua)}
     };
     
     std::unordered_map<std::string, std::unordered_set<std::string>> cmd_keys = {
