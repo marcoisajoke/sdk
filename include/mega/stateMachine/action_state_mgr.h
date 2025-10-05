@@ -29,12 +29,12 @@ enum ACTIONSTATE {
     ACTIONSTATE_SEARCH_ARRAY_OF_STRING_VALUE,
     ACTIONSTATE_SEARCH_ARRAY_OF_STRING_STRING_VALUE,
     ACTIONSTATE_SAVING_ARRAY_OP_STRING_VALUE,
+    ACTIONSTATE_SEARCH_STRING_OR_INT_VALUE,
+    ACTIONSTATE_SEARCH_STRING_OR_INT_OR_BOOL_VALUE,
+    ACTIONSTATE_SEARCH_BOOL_VALUE,
+    ACTIONSTATE_SAVING_BOOL_VALUE,
     ACTIONSTATE_END,
 };
-enum ACTIONSTATE_VALUE_TYPE {
-    VALUE_TYPE_INT64,
-    VALUE_TYPE_STRING,
-}
 class KeyStateData {
 public:
     KeyStateData(ACTIONSTATE search_s, void* v) {
@@ -45,10 +45,19 @@ public:
     void* value;
 };
 
+union StringOrInt {
+    std::string str;
+    int64_t i;
+};
+union StringOrIntOrBool {
+    std::string str;
+    int64_t i;
+    bool b;
+};
+
 class MegaClient;
 class ActionStateMgr;
 typedef bool (*ActionStateMgrFuncPtr)(ActionStateMgr* mgr);
-typedef bool (*ActionStateKeyFuncPtr)(ActionStateMgr* mgr);
 class ActionStateMgr {
 public:
     ActionStateMgr();
@@ -72,6 +81,10 @@ public:
     static bool search_arrayOfString_value(ActionStateMgr* mgr);
     static bool search_arrayOfString_string_value(ActionStateMgr* mgr);
     static bool saving_arrayOfString_value(ActionStateMgr* mgr);
+    static bool search_string_or_int_value(ActionStateMgr* mgr);
+    static bool search_string_or_int_or_bool_value(ActionStateMgr* mgr); 
+    static bool search_bool_value(ActionStateMgr* mgr);
+    static bool saving_bool_value(ActionStateMgr* mgr);
     /*action state function end*/
     
     
@@ -80,33 +93,60 @@ public:
     MegaClient* client;
     std::string key;
     std::string value;
+    std::string cmd;
     ACTIONSTATE p_state;
     bool has_i = false;
     bool is_in_checker = false;
     bool is_check_bypass = false;
     KeyStateData* cur_data;
-    std::string cmd;
 
     //////////////////////////////////////////////
     /*keys cache begin*/
     std::string key_a;
     std::string key_i;
     std::string key_st;
-    std::string key_n;
-    std::string key_u;  //sc_contacts() is array of object. implement after a while
+    std::string key_u;  //sc_contacts() is array of object. implement after a while. string/int/array
     std::string key_at;
-    int64_t key_ts;
     std::string key_ou;
-    std::string key_p;
-    bool key_op;
-    std::string key_o;
     std::string key_ok;
-    int64_t key_okd;
     std::string key_ha;
-    int64_t key_r;
     std::string key_k;
     std::string key_fa;
+    std::string key_msg;
+    std::string key_h;
+    std::string key_ph;
+    std::string key_w;
+    std::string key_id;
+    std::string key_cid;
+    std::string key_tz;
+    std::string key_t; //maybe a array of object or int/string
+    std::string key_td;
+    int64_t key_okd;
+    int64_t key_ts;
+    int64_t key_it;
+    int64_t key_uts;
+    int64_t key_rts;
+    int64_t key_dts;
+    int64_t key_clv;
+    int64_t key_down;
+    int64_t key_ets;
+    int64_t key_cs; //maybe a array or object in sc_scheduledmeetings
+    int64_t key_f;
+    int64_t key_c;
+    int64_t key_gd;
+    StringOrInt key_m;
+    StringOrInt key_o;
+    StringOrInt key_e;
+    StringOrInt key_s;
+    StringOrInt key_d;
+    StringOrInt key_p;
+    StringOrIntOrBool key_r; //may be a object in sc_scheduledmeetings
+    StringOrInt key_n; // may be array of object sc_chatupdate
     std::vector<std::string> key_ua;
+    std::vector<std::string> key_v;
+    std::vector<std::string> key_cmd;
+    bool key_g;
+    bool key_op; // no value.
     /*keys cache end*/
     //////////////////////////////////////////////
 
@@ -114,24 +154,51 @@ public:
     
     
     std::unordered_map<std::string, KeyStateData> key_2_state = {
-        {"a", KeyStateData(ACTIONSTATE_SEARCH_STRING_VALUE, &cmd)},
-        {"i", KeyStateData(ACTIONSTATE_SEARCH_STRING_VALUE, &key_i)},
-        {"st", KeyStateData(ACTIONSTATE_SEARCH_ST_VALUE, &key_st)},
-        {"n", KeyStateData(ACTIONSTATE_SEARCH_STRING_VALUE, &key_n)},
-        {"u", KeyStateData(ACTIONSTATE_SEARCH_STRING_VALUE, &key_u)},
-        {"at", KeyStateData(ACTIONSTATE_SEARCH_STRING_VALUE,  &key_at)},
-        {"ts", KeyStateData(ACTIONSTATE_SEARCH_INT64_VALUE, &key_ts)},
-        {"ou", KeyStateData(ACTIONSTATE_SEARCH_STRING_VALUE, &key_ou)},
-        {"p", KeyStateData(ACTIONSTATE_SEARCH_STRING_VALUE, &key_p)},
-        {"op", KeyStateData(ACTIONSTATE_SEARCH_STRING_VALUE, &key_op)},
-        {"o", KeyStateData(ACTIONSTATE_SEARCH_STRING_VALUE, &key_o)},
-        {"ok", KeyStateData(ACTIONSTATE_SEARCH_INT64_VALUE, &key_ok)},
-        {"okd", KeyStateData(ACTIONSTATE_SEARCH_STRING_VALUE, &key_okd)},
-        {"ha", KeyStateData(ACTIONSTATE_SEARCH_STRING_VALUE, &key_ha)},
-        {"r", KeyStateData(ACTIONSTATE_SEARCH_INT64_VALUE, &key_r)},
-        {"k", KeyStateData(ACTIONSTATE_SEARCH_STRING_VALUE, &key_k)},
-        {"fa", KeyStateData(ACTIONSTATE_SEARCH_STRING_VALUE, &key_fa)},
-        {"ua", KeyStateData(ACTIONSTATE_SEARCH_ARRAY_OF_STRING_VALUE, &key_ua)}
+        {"a",    KeyStateData(ACTIONSTATE_SEARCH_STRING_VALUE,                &cmd)},
+        {"i",    KeyStateData(ACTIONSTATE_SEARCH_STRING_VALUE,                &key_i)},
+        {"u",    KeyStateData(ACTIONSTATE_SEARCH_STRING_VALUE,                &key_u)},
+        {"at",   KeyStateData(ACTIONSTATE_SEARCH_STRING_VALUE,                &key_at)},
+        {"ou",   KeyStateData(ACTIONSTATE_SEARCH_STRING_VALUE,                &key_ou)},
+        {"op",   KeyStateData(ACTIONSTATE_SEARCH_STRING_VALUE,                &key_op)},
+        {"okd",  KeyStateData(ACTIONSTATE_SEARCH_STRING_VALUE,                &key_okd)},
+        {"ha",   KeyStateData(ACTIONSTATE_SEARCH_STRING_VALUE,                &key_ha)},
+        {"k",    KeyStateData(ACTIONSTATE_SEARCH_STRING_VALUE,                &key_k)},
+        {"fa",   KeyStateData(ACTIONSTATE_SEARCH_STRING_VALUE,                &key_fa)},
+        {"msg",  KeyStateData(ACTIONSTATE_SEARCH_STRING_VALUE,                &key_msg)},
+        {"h",    KeyStateData(ACTIONSTATE_SEARCH_STRING_VALUE,                &key_h)},
+        {"ph",   KeyStateData(ACTIONSTATE_SEARCH_STRING_VALUE,                &key_ph)},
+        {"w",    KeyStateData(ACTIONSTATE_SEARCH_STRING_VALUE,                &key_w)},
+        {"id",   KeyStateData(ACTIONSTATE_SEARCH_STRING_VALUE,                &key_id)},
+        {"cid",  KeyStateData(ACTIONSTATE_SEARCH_STRING_VALUE,                &key_cid)},
+        {"t",    KeyStateData(ACTIONSTATE_SEARCH_STRING_VALUE,                &key_t)},
+        {"st",   KeyStateData(ACTIONSTATE_SEARCH_ST_VALUE,                    &key_st)},
+        {"it",   KeyStateData(ACTIONSTATE_SEARCH_INT64_VALUE,                 &key_it)},
+        {"ts",   KeyStateData(ACTIONSTATE_SEARCH_INT64_VALUE,                 &key_ts)},
+        {"ok",   KeyStateData(ACTIONSTATE_SEARCH_INT64_VALUE,                 &key_ok)},
+        {"uts",  KeyStateData(ACTIONSTATE_SEARCH_INT64_VALUE,                 &key_uts)},
+        {"rts",  KeyStateData(ACTIONSTATE_SEARCH_INT64_VALUE,                 &key_rts)},
+        {"dts",  KeyStateData(ACTIONSTATE_SEARCH_INT64_VALUE,                 &key_dts)},
+        {"clv",  KeyStateData(ACTIONSTATE_SEARCH_INT64_VALUE,                 &key_clv)},
+        {"down", KeyStateData(ACTIONSTATE_SEARCH_INT64_VALUE,                 &key_down)},
+        {"ets",  KeyStateData(ACTIONSTATE_SEARCH_INT64_VALUE,                 &key_ets)},
+        {"cs",   KeyStateData(ACTIONSTATE_SEARCH_INT64_VALUE,                 &key_cs)},
+        {"f",    KeyStateData(ACTIONSTATE_SEARCH_INT64_VALUE,                 &key_f)},
+        {"c",    KeyStateData(ACTIONSTATE_SEARCH_INT64_VALUE,                 &key_c)},
+        {"gd",   KeyStateData(ACTIONSTATE_SEARCH_INT64_VALUE,                 &key_gd)},
+        {"td",   KeyStateData(ACTIONSTATE_SEARCH_INT64_VALUE,                 &key_td)},
+        {"n",    KeyStateData(ACTIONSTATE_SEARCH_STRING_OR_INT_VALUE,         &key_n)},
+        {"p",    KeyStateData(ACTIONSTATE_SEARCH_STRING_OR_INT_VALUE,         &key_p)},
+        {"o",    KeyStateData(ACTIONSTATE_SEARCH_STRING_OR_INT_VALUE,         &key_o)},
+        {"m",    KeyStateData(ACTIONSTATE_SEARCH_STRING_OR_INT_VALUE,         &key_m)},
+        {"e",    KeyStateData(ACTIONSTATE_SEARCH_STRING_OR_INT_VALUE,         &key_e)},
+        {"s",    KeyStateData(ACTIONSTATE_SEARCH_STRING_OR_INT_VALUE,         &key_s)},
+        {"d",    KeyStateData(ACTIONSTATE_SEARCH_STRING_OR_INT_VALUE,         &key_d)},
+        {"r",    KeyStateData(ACTIONSTATE_SEARCH_STRING_OR_INT_OR_BOOL_VALUE, &key_r)},
+        {"ua",   KeyStateData(ACTIONSTATE_SEARCH_ARRAY_OF_STRING_VALUE,       &key_ua)},
+        {"v",    KeyStateData(ACTIONSTATE_SEARCH_ARRAY_OF_STRING_VALUE,       &key_v)},
+        {"cmd",  KeyStateData(ACTIONSTATE_SEARCH_ARRAY_OF_STRING_VALUE,       &key_cmd)},
+        {"g",    KeyStateData(ACTIONSTATE_SEARCH_BOOL_VALUE,                  &key_g)},
+
     };
     
     std::unordered_map<std::string, std::unordered_set<std::string>> cmd_keys = {

@@ -28,6 +28,10 @@ ActionStateMgr::ActionStateMgr() {
     func_map[ACTIONSTATE_SEARCH_ARRAY_OF_STRING_VALUE] = ActionStateMgr::search_arrayOfString_value;
     func_map[ACTIONSTATE_SEARCH_ARRAY_OF_STRING_STRING_VALUE] = ActionStateMgr::search_arrayOfString_string_value;
     func_map[ACTIONSTATE_SAVING_ARRAY_OP_STRING_VALUE] = ActionStateMgr::saving_arrayOfString_value;
+    func_map[ACTIONSTATE_SEARCH_STRING_OR_INT_VALUE] = ActionStateMgr::search_string_or_int_value;
+    func_map[ACTIONSTATE_SEARCH_STRING_OR_INT_OR_BOOL_VALUE] = ActionStateMgr::search_string_or_int_or_bool_value;
+    func_map[ACTIONSTATE_SEARCH_BOOL_VALUE] = ActionStateMgr::search_bool_value;
+    func_map[ACTIONSTATE_SAVING_BOOL_VALUE] = ActionStateMgr::saving_bool_value;
 }
 void ActionStateMgr::init(JsonString* jStr, MegaClient* cli) {
     jsonString = jStr;
@@ -273,6 +277,88 @@ bool ActionStateMgr::saving_arrayOfString_value(ActionStateMgr* mgr) {
     mgr->jsonString->inc();
     return true;
 
+}
+bool ActionStateMgr::search_string_or_int_value(ActionStateMgr* mgr) {
+    if(mgr->jsonString->bypassEmpty()) {
+        return true;
+    }
+
+    if(mgr->jsonString->bypassChar(':')) {
+        return true;
+    }
+
+    auto& cur_c = mgr->jsonString->cur_c;
+    if(cur_c == '"') {
+        mgr->p_state = ACTIONSTATE_SAVING_STRING_VALUE;
+        *((std::string*)(mgr->cur_data->value)) = "";
+        return true;
+    }
+    if('0' <= cur_c && cur_c <= '9') {
+        mgr->p_state = ACTIONSTATE_SAVING_INT64_VALUE;
+        *((int64_t*)(mgr->cur_data->value)) = 0;
+        return true;
+    }
+    return false;
+}
+bool ActionStateMgr::search_string_or_int_or_bool_value(ActionStateMgr* mgr) {
+    if(mgr->jsonString->bypassEmpty()) {
+        return true;
+    }
+
+    if(mgr->jsonString->bypassChar(':')) {
+        return true;
+    }
+
+    auto& cur_c = mgr->jsonString->cur_c;
+    if(cur_c == '"') {
+        mgr->p_state = ACTIONSTATE_SAVING_STRING_VALUE;
+        *((std::string*)(mgr->cur_data->value)) = "";
+        return true;
+    }
+    if('0' <= cur_c && cur_c <= '9') {
+        mgr->p_state = ACTIONSTATE_SAVING_INT64_VALUE;
+        *((int64_t*)(mgr->cur_data->value)) = 0;
+        return true;
+    }
+    if(cur_c == 't') {
+        *((bool*)(mgr->cur_data->value)) = true;
+        mgr->p_state = ACTIONSTATE_SAVING_BOOL_VALUE;
+        return true;
+    }
+    if(cur_c == 'f') {
+        *((bool*)(mgr->cur_data->value)) = false;
+        mgr->p_state = ACTIONSTATE_SAVING_BOOL_VALUE;
+        return true;
+    }
+    return false;
+}
+
+bool ActionStateMgr::search_bool_value(ActionStateMgr* mgr) {
+    if(mgr->jsonString->bypassEmpty()) {
+        return true;
+    }
+    if(mgr->jsonString->bypassChar(':')) {
+        return true;
+    }
+    if(mgr->jsonString->cur_c == 't') {
+        *((bool*)(mgr->cur_data->value)) = true;
+        mgr->p_state = ACTIONSTATE_SAVING_BOOL_VALUE;
+        return true;
+    }
+    if(mgr->jsonString->cur_c == 'f') {
+        *((bool*)(mgr->cur_data->value)) = false;
+        mgr->p_state = ACTIONSTATE_SAVING_BOOL_VALUE;
+        return true;
+    }
+    return false;
+}
+bool ActionStateMgr::saving_bool_value(ActionStateMgr* mgr) {
+    if(mgr->jsonString->cur_c != ',' || mgr->jsonString->cur_c != '}') {
+        mgr->jsonString->inc();
+        return true;
+    }
+    mgr->pstate = ACTIONSTATE_SEARCH_KEY;
+    return true;
 }
 
 }
