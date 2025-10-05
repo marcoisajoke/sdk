@@ -5255,17 +5255,20 @@ bool MegaClient::procsc()
             {
                 
                 case makeNameid("w"):
+                    //marcotan too much unused branch check for only get the string value.
                     jsonsc.storeobject(&scnotifyurl);
                     break;
 
                 case makeNameid("ir"):
                     // when spoonfeeding is in action, there may still be more actionpackets to be delivered.
+                    //marcotan see inside getInt.
                     insca_notlast = jsonsc.getint() == 1;
                     break;
 
                 case makeNameid("sn"):
                     std::cout<<"sn"<<std::endl;
                     // the sn element is guaranteed to be the last in sequence (except for notification requests (c=50))
+
                     scsn.setScsn(&jsonsc);
                     // At this point no CurrentSeqtag should be seen. mCurrentSeqtagSeen is set true
                     // when action package is processed and the seq tag matches with mCurrentSeqtag
@@ -5495,6 +5498,7 @@ bool MegaClient::procsc()
                     }
                     // fall through
                 default:
+                    //too heavy, just by pass the value is OK
                     if (!jsonsc.storeobject())
                     {
                         LOG_err << "Error parsing sc request";
@@ -5519,10 +5523,12 @@ bool MegaClient::procsc()
                 }
             }
             jsonsc.pos = actionpacketStart;
-
             if (jsonsc.enterobject())
             {
                 // the "a" attribute is guaranteed to be the first in the object
+                //marcotan use getnameid to get json key seams too heavy
+                //marcotan maybe json is not so easy to check. logic should keep.
+                //key and value decode should be seperate
                 if (jsonsc.getnameid() == makeNameid("a"))
                 {
                     if (!statecurrent)
@@ -5632,7 +5638,7 @@ bool MegaClient::procsc()
                                 // outgoing pending contact request update (from them, accept/deny/ignore)
                                 sc_upc(false);
                                 break;
-
+                            //marcotan dup compute
                             case makeNameid("ph"):
                                 // public links handles
                                 sc_ph();
@@ -6544,6 +6550,7 @@ bool MegaClient::sc_checkActionPacket(Node* lastAPDeletedNode)
 
     for (;;)
     {
+        //marcotan decode string key and string value should be logic seperate
         switch (jsonsc.getnameid())
         {
         case makeNameid("a"): // action referred by the packet
@@ -6551,12 +6558,14 @@ bool MegaClient::sc_checkActionPacket(Node* lastAPDeletedNode)
             break;
 
         case makeNameid("i"): // id of the client who made the action triggering this packet
+            //marcotan bypass any value type
             jsonsc.storeobject();
             break;
 
         case makeNameid("st"): // sequence tag
         {
             string tag;
+            //marcotan string type is sure. just fetch the string is ok
             jsonsc.storeobject(&tag);
             return sc_checkSequenceTag(tag);
         }
@@ -7251,10 +7260,11 @@ void MegaClient::sc_userattr()
             case name_id::u:
                 uh = jsonsc.gethandle(USERHANDLE);
                 break;
-
+            //marcotan dup compute
             case makeNameid("ua"):
                 if (jsonsc.enterarray())
                 {
+                    //marcotan decode string 
                     while (jsonsc.storeobject(&ua))
                     {
                         ualist.push_back(ua);
@@ -7273,7 +7283,7 @@ void MegaClient::sc_userattr()
                     jsonsc.leavearray();
                 }
                 break;
-
+            //get key meet end of the } ]
             case EOO:
                 if (ISUNDEF(uh))
                 {
@@ -7281,6 +7291,7 @@ void MegaClient::sc_userattr()
                 }
                 else
                 {
+                    //marcotan use unordered map instead of map
                     u = finduser(uh);
                 }
                 if (!u)
@@ -7415,6 +7426,7 @@ void MegaClient::sc_userattr()
                 return;
 
             default:
+                //marco bypass any value
                 if (!jsonsc.storeobject())
                 {
                     return;

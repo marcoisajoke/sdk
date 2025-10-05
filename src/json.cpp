@@ -35,6 +35,11 @@ std::atomic<bool> gLogJSONRequests{false};
 
 // store array or object in string s
 // reposition after object
+//marcotan too heavy
+//bypass int
+//bypass [] {}
+//get string value
+
 bool JSON::storeobject(string* s)
 {
     int openobject[2] = { 0 };
@@ -69,6 +74,7 @@ bool JSON::storeobject(string* s)
             openobject[*ptr == ']']--;
             if(openobject[*ptr == ']'] < 0)
             {
+                //marcotan why continue
                 LOG_err << "Parse error (])";
             }
         }
@@ -111,7 +117,6 @@ bool JSON::storeobject(string* s)
         {
             if (s)
             {
-                //marcotan 保存括号内的字符串，为了进一步解析json
                 if (*pos == '"')
                 {
                     s->assign(pos + 1, static_cast<size_t>(ptr - pos - 2));
@@ -149,6 +154,7 @@ bool JSON::skipnullvalue()
 
     switch (*pos)
     {
+    //marcotan why not validate json string should skip?
     case ',':         // empty value, i.e.  "foo":,
         ++pos;
     // fall through
@@ -275,6 +281,7 @@ nameid JSON::getNameidSkipNull(bool skipnullvalues)
     const char* ptr = pos;
     nameid id = 0;
 
+    //marcotan key and value should be split
     if (*ptr == ',' || *ptr == ':')
     {
         ptr++;
@@ -290,6 +297,7 @@ nameid JSON::getNameidSkipNull(bool skipnullvalues)
         assert(*ptr == '"'); // if either assert fails, check the json syntax, it might be something new/changed
         pos = ptr + 1;
 
+        //key and value should be split logic
         if (*pos == ':' || *pos == ',' )
         {
             pos++;
@@ -346,6 +354,7 @@ int JSON::storebinary(byte* dst, int dstlen)
         l = Base64::atob(pos + 1, dst, dstlen);
 
         // skip string
+        //marcotan too heavy, just bypass the string is ok
         storeobject();
     }
 
@@ -442,7 +451,7 @@ m_off_t JSON::getint()
     }
 
     ptr = pos;
-
+    //marcotan no need to check 
     if (*ptr == '"')
     {
         ptr++;
@@ -458,8 +467,9 @@ m_off_t JSON::getint()
         // std::numeric_limits<m_off_t>::min().
         return -1;
     }
-
+    //marcotan ptr is the first char of int
     handle r = static_cast<handle>(atoll(ptr));
+    //double handle the int string, and too much branch check
     storeobject();
 
     return static_cast<m_off_t>(r);
@@ -576,6 +586,7 @@ bool JSON::leavearray()
 // try to enter object
 bool JSON::enterobject()
 {
+    //marcotan not quite sure. maybe there is another way to enhance
     if (*pos == '}')
     {
         pos++;
