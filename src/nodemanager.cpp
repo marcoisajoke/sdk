@@ -18,7 +18,7 @@
  * You should have received a copy of the license along with this
  * program.
  */
-
+#include "mega.h"
 #include "mega/nodemanager.h"
 
 #include "mega/base64.h"
@@ -1819,7 +1819,8 @@ void NodeManager::initCompleted_internal()
         assert(false);
         return;
     }
-
+    {
+        TimeSpan span("calculate node: ");
     sharedNode_vector rootNodes = getRootNodesAndInshares();
     for (auto& node: rootNodes)
     {
@@ -1832,8 +1833,11 @@ void NodeManager::initCompleted_internal()
             reportNullRootNodes(rootNodes.size());
         }
     }
-
+    }
+    {
+        TimeSpan span("createIndexes: ");
     mTable->createIndexes(mClient.mEnableSearchDBIndexes);
+    }
     mInitialized = true;
 }
 

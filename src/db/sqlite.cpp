@@ -676,7 +676,7 @@ bool SqliteDbTable::inTransaction() const
 // set cursor to first record
 void SqliteDbTable::rewind()
 {
-    TimeSpan tt("db rewind: ");
+    //TimeSpan tt("db rewind: ");
     if (!db)
     {
         return;
@@ -732,8 +732,8 @@ bool SqliteDbTable::next(uint32_t* index, string* data)
 // retrieve record by index
 bool SqliteDbTable::get(uint32_t index, string* data)
 {
-    std::cout<<"get from " << dbfile<<std::endl;
-    TimeSpan tt("db get:");
+    //std::cout<<"get from " << dbfile<<std::endl;
+    //TimeSpan tt("db get:");
     if (!db)
     {
         return false;
@@ -767,8 +767,8 @@ bool SqliteDbTable::get(uint32_t index, string* data)
 // add/update record by index
 bool SqliteDbTable::put(uint32_t index, char* data, unsigned len)
 {
-    std::cout<<"put " << dbfile<<std::endl;
-    TimeSpan tt("db put: ");
+    //std::cout<<"put " << dbfile<<std::endl;
+    //TimeSpan tt("db put: ");
     if (!db)
     {
         return false;
@@ -809,8 +809,8 @@ bool SqliteDbTable::put(uint32_t index, char* data, unsigned len)
 // delete record by index
 bool SqliteDbTable::del(uint32_t index)
 {
-    std::cout<<"del " << dbfile<<std::endl;
-    TimeSpan tt("db del: ");
+    //std::cout<<"del " << dbfile<<std::endl;
+    //TimeSpan tt("db del: ");
     if (!db)
     {
         return false;
@@ -843,8 +843,8 @@ bool SqliteDbTable::del(uint32_t index)
 // truncate table
 void SqliteDbTable::truncate()
 {
-    std::cout<<"truncate " << dbfile<<std::endl;
-    TimeSpan tt("db truncate: ");
+    //std::cout<<"truncate " << dbfile<<std::endl;
+    //TimeSpan tt("db truncate: ");
     if (!db)
     {
         return;
@@ -860,8 +860,8 @@ void SqliteDbTable::truncate()
 // begin transaction
 void SqliteDbTable::begin()
 {
-    std::cout<<"begin " << dbfile<<std::endl;
-    TimeSpan tt(" db begin: ");
+    //std::cout<<"begin " << dbfile<<std::endl;
+    //TimeSpan tt(" db begin: ");
     if (!db)
     {
         return;
@@ -876,8 +876,8 @@ void SqliteDbTable::begin()
 // commit transaction
 void SqliteDbTable::commit()
 {
-    std::cout<<"commit " << dbfile<<std::endl;
-    TimeSpan tt("=========== db commit:  ");
+    //std::cout<<"commit " << dbfile<<std::endl;
+    //TimeSpan tt("=========== db commit:  ");
     if (!db)
     {
         return;
