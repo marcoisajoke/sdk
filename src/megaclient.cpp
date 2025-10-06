@@ -1923,20 +1923,6 @@ void MegaClient::init()
     // Reset last known capacity.
     mLastKnownCapacity = -1;
 }
-static int64_t now_us() {
-    auto now = std::chrono::high_resolution_clock::now();
-    return std::chrono::duration_cast<std::chrono::microseconds>(
-        now.time_since_epoch()).count();
-}
-class ScopedTimer {
-public:
-    ScopedTimer(const std::string& t) : start_(now_us()), tag_(t){}
-    ~ScopedTimer() { auto r = now_us() - start_; std::cout<<tag_<<" diff "<<r<<"us"<<std::endl;}
-private:
-    int64_t start_;
-    std::string tag_;
-};
-
 
 MegaClient::MegaClient(MegaApp* a,
                        shared_ptr<Waiter> w,
@@ -3254,10 +3240,10 @@ void MegaClient::exec()
             // FIXME: reload in case of bad JSON
             {
                 {
-            //ScopedTimer ttt("procsc first perf: ");
+            //TimeSpan ttt("procsc first perf: ");
             //procsc();
                 }
-            //ScopedTimer tt("procsc perf:");
+            //TimeSpan tt("procsc perf:");
             //for(int i=0; i<10000; i++) {
             //    procsc();
             //}
@@ -5277,14 +5263,14 @@ bool MegaClient::procsc()
 
     CodeCounter::ScopeTimer ccst(performanceStats.scProcessingTime);
     nameid name;
-    //ScopedTimer span("procsc func ");
+    //TimeSpan span("procsc func ");
     std::shared_ptr<Node> lastAPDeletedNode;
 
     for (;;)
     {
         if (!insca)
         {
-            //ScopedTimer tt("process action key");
+            //TimeSpan tt("process action key");
             switch (jsonsc.getnameid())
             {
                 
@@ -5302,7 +5288,7 @@ bool MegaClient::procsc()
                     break;
 
                 case makeNameid("sn"): {
-                    //ScopedTimer tt("process sn all");
+                    //TimeSpan tt("process sn all");
                     // the sn element is guaranteed to be the last in sequence (except for notification requests (c=50))
 
                     scsn.setScsn(&jsonsc);
@@ -5312,20 +5298,20 @@ bool MegaClient::procsc()
                     notifypurge();
                     if (sctable)
                     {
-                        //ScopedTimer tt("process sn sctable");
+                        //TimeSpan tt("process sn sctable");
                         if (!pendingcs && !csretrying && !reqs.readyToSend())
                         {
                             LOG_debug << "DB transaction COMMIT (sessionid: " << string(sessionid, sizeof(sessionid)) << ")";
                             {
-                            //ScopedTimer tt("process sn commit");
+                            //TimeSpan tt("process sn commit");
                             sctable->commit();
                             }
                             {
-                            //ScopedTimer tt("process sn begin");
+                            //TimeSpan tt("process sn begin");
                             sctable->begin();
                             }
                             {
-                            //ScopedTimer tt("process sn notify");
+                            //TimeSpan tt("process sn notify");
                             app->notify_dbcommit();
                             }
                             pendingsccommit = false;
@@ -5340,7 +5326,7 @@ bool MegaClient::procsc()
                 }
 
                 case EOO: {
-                    //ScopedTimer spp("EOO func call ");
+                    //TimeSpan spp("EOO func call ");
                     if (!useralerts.isDeletedSharedNodesStashEmpty())
                     {
 			useralerts.purgeNodeVersionsFromStash();
@@ -5357,11 +5343,11 @@ bool MegaClient::procsc()
                     {
                         if (fetchingnodes)
                         {
-                            //ScopedTimer spp_0("0000000000");
+                            //TimeSpan spp_0("0000000000");
                             notifypurge();
                             if (sctable)
                             {
-                                //ScopedTimer spp_7("77777777777");
+                                //TimeSpan spp_7("77777777777");
                                 LOG_debug << "DB transaction COMMIT (sessionid: " << string(sessionid, sizeof(sessionid)) << ")";
                                 sctable->commit();
                                 sctable->begin();
@@ -5381,23 +5367,23 @@ bool MegaClient::procsc()
                                 LOG_debug << "cached blocked states reports blocked, and no block state has been received before, issuing whyamiblocked";
                                 whyamiblocked();// lets query again, to trigger transition and restoreSyncs
                             }
-                            //ScopedTimer spp_8("88888888");
+                            //TimeSpan spp_8("88888888");
                             {
-                                //ScopedTimer spp_98("enabletransferresumption");
+                                //TimeSpan spp_98("enabletransferresumption");
                                 //enabletransferresumption diff 4352us
                             enabletransferresumption();
                             }
                             {
-                            //ScopedTimer spp_98("fetchnodes_result");
+                            //TimeSpan spp_98("fetchnodes_result");
                             //fetchnodes_result diff 4469us
                             app->fetchnodes_result(API_OK);
                             }
                             {
-                            //ScopedTimer spp_98("notify_dbcommit");
+                            //TimeSpan spp_98("notify_dbcommit");
                             app->notify_dbcommit();
                             }
                             fetchnodesAlreadyCompletedThisSession = true;
-                            //ScopedTimer spp_9("9999999999");
+                            //TimeSpan spp_9("9999999999");
                             WAIT_CLASS::bumpds();
                             fnstats.timeToSyncsResumed = Waiter::ds - fnstats.startTime;
 
@@ -5417,7 +5403,7 @@ bool MegaClient::procsc()
                     
                         uint64_t numNodes = mNodeManager.getNodeCount();
                         fnstats.nodesCurrent = static_cast<long long>(numNodes);
-                        //ScopedTimer spp_1("111111111");
+                        //TimeSpan spp_1("111111111");
                         if (mKeyManager.generation())
                         {
                             // Clear in-use bit if needed for the shared nodes in ^!keys.
@@ -5439,7 +5425,7 @@ bool MegaClient::procsc()
                             syncsAlreadyLoadedOnStatecurrent = true;
                         }
 #endif
-                        //ScopedTimer spp_2("222222222");
+                        //TimeSpan spp_2("222222222");
                         if (tctable && cachedfiles.size())
                         {
                             TransferDbCommitter committer(tctable);
@@ -5469,7 +5455,7 @@ bool MegaClient::procsc()
 
                         string report;
                         fnstats.toJsonArray(&report);
-                        //ScopedTimer spp_3("3333333333");
+                        //TimeSpan spp_3("3333333333");
                         sendevent(99426, report.c_str(), 0);    // Treeproc performance log
 
                         // NULL vector: "notify all elements"
@@ -5499,7 +5485,7 @@ bool MegaClient::procsc()
                             }
                         }
                     }
-                    //ScopedTimer spp_4("44444444");
+                    //TimeSpan spp_4("44444444");
                     {
                         // In case a fetchnodes() occurs mid-session.  We should not allow
                         // the syncs to see the new tree unless we've caught up to at least
@@ -5533,7 +5519,7 @@ bool MegaClient::procsc()
 
                     if (pendingsccommit && sctable && !reqs.cmdsInflight() && scsn.ready())
                     {  
-                        //ScopedTimer s_11("eoo db commit");
+                        //TimeSpan s_11("eoo db commit");
                         LOG_debug << "Executing postponed DB commit 1";
                         sctable->commit();
                         sctable->begin();
@@ -15182,17 +15168,17 @@ void MegaClient::enabletransferresumption()
     }
     else
     {
-        //ScopedTimer kdkdkdk("enabletransferresumption hash: ");
+        //TimeSpan kdkdkdk("enabletransferresumption hash: ");
         string lok;
         Hash hash;
         hash.add((const byte *)dbname.c_str(), unsigned(dbname.size() + 1));
         hash.get(&lok);
         tckey.setkey((const byte*)lok.data());
     }
-    //ScopedTimer iiiiee("enabletransferresumption table open: ");
+    //TimeSpan iiiiee("enabletransferresumption table open: ");
     dbname.insert(0, "transfers_");
     {
-        //ScopedTimer iiiiee("enabletransferresumption table reset: ");
+        //TimeSpan iiiiee("enabletransferresumption table reset: ");
     tctable.reset(dbaccess->open(rng, *fsaccess, dbname, DB_OPEN_FLAG_RECYCLE | DB_OPEN_FLAG_TRANSACTED, [this](DBError error)
     {
         handleDbError(error);
@@ -15208,7 +15194,7 @@ void MegaClient::enabletransferresumption()
     // However, upon login into an account, previously cached transfers are discarded.
     // If we want to resume those transfers after logging in on the main instance,
     // we should read them from the default cache and resume them.
-    //ScopedTimer ssss("enabletransferresumption mid. -------------: ");
+    //TimeSpan ssss("enabletransferresumption mid. -------------: ");
     uint32_t id;
     string data;
     Transfer* t;
@@ -15218,7 +15204,7 @@ void MegaClient::enabletransferresumption()
     LOG_info << "Loading transfers from local cache";
     tctable->rewind();
     {
-        //ScopedTimer ssss("committer");
+        //TimeSpan ssss("committer");
         TransferDbCommitter committer(tctable); // needed in case of tctable->del()
         while (tctable->next(&id, &data, &tckey))
         {
@@ -15259,7 +15245,7 @@ void MegaClient::enabletransferresumption()
     // postpone the resumption until the filesystem is updated
     if ((!sid.size() && !loggedIntoFolder()) || statecurrent)
     {
-        //ScopedTimer dddd("second commiter");
+        //TimeSpan dddd("second commiter");
         TransferDbCommitter committer(tctable);
         for (unsigned int i = 0; i < cachedfiles.size(); i++)
         {

@@ -18,7 +18,7 @@
  * You should have received a copy of the license along with this
  * program.
  */
-
+#include "mega.h"
 #include "mega/request.h"
 #include "mega/command.h"
 #include "mega/logging.h"
@@ -157,19 +157,7 @@ bool Request::processSeqTag(Command* cmd, bool withJSON, bool& parsedOk, bool in
         return false;
     }
 }
-static int64_t now_us() {
-    auto now = std::chrono::high_resolution_clock::now();
-    return std::chrono::duration_cast<std::chrono::microseconds>(
-        now.time_since_epoch()).count();
-}
-class ScopedTimer {
-public:
-    ScopedTimer(const std::string& t) : start_(now_us()), tag_(t){}
-    ~ScopedTimer() { auto r = now_us() - start_; std::cout<<tag_<<r<<"us"<<std::endl;}
-private:
-    int64_t start_;
-    std::string tag_;
-};
+
 m_off_t Request::processChunk(const char* chunk, MegaClient *client)
 {
     if (stopProcessing || cmds.size() != 1)
@@ -184,7 +172,7 @@ m_off_t Request::processChunk(const char* chunk, MegaClient *client)
     //std::cout<<"========processChunk========="<<std::endl;
     //std::cout<<chunk<<std::endl;
     m_off_t consumed = 0;
-    ScopedTimer span("============== processChunk process time: ");
+    TimeSpan span("============== processChunk process time: ");
     Command& cmd = *cmds[0];
     client->restag = cmd.tag;
     cmd.client = client;
@@ -204,7 +192,7 @@ m_off_t Request::processChunk(const char* chunk, MegaClient *client)
         assert(mJsonSplitter.isStarting());
     }
     {
-        ScopedTimer tt("11111111111: ");
+        TimeSpan tt("11111111111: ");
         //4291us
         //marcotan
     consumed += mJsonSplitter.processChunk(&cmd.mFilters, json.pos);

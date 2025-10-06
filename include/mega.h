@@ -88,7 +88,25 @@
 
 #include "mega/gfx/freeimage.h"
 #include "mega/gfx/GfxProcCG.h"
+namespace mega {
 
+class TimeSpan {
+public:
+    TimeSpan(const std::string& t) : start_(now_us()), tag_(t){
+        std::cout<<"------------------"<<tag_<<" begin ----------------"<<std::endl; 
+    }
+    ~TimeSpan() { auto r = now_us() - start_; std::cout<<"------------------"
+        <<tag_<<" use "<<r<<"us"<<" end ----------------"<<std::endl;}
+private:
+    static int64_t now_us() {
+        auto now = std::chrono::high_resolution_clock::now();
+        return std::chrono::duration_cast<std::chrono::microseconds>(
+            now.time_since_epoch()).count();
+    }
+    int64_t start_;
+    std::string tag_;
+};
+}
 
 #if defined(REQUIRE_HAVE_FFMPEG) && !defined(HAVE_FFMPEG)
 #error compilation with HAVE_FFMPEG is required
