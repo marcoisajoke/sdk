@@ -6984,6 +6984,8 @@ void MegaApiImpl::init(MegaApi* publicApi,
     threadExit = 0;
     thread = std::thread([this](){ threadEntryPoint(this); } );
     threadId = thread.get_id();
+
+    
 }
 
 MegaApiImpl::~MegaApiImpl()
@@ -7939,6 +7941,7 @@ void MegaApiImpl::loop()
 
     while(true)
     {
+        std::cout<<"ttttt"<<std::endl;
         int r;
         {
             SdkMutexGuard g(sdkMutex);
@@ -7975,6 +7978,7 @@ void MegaApiImpl::loop()
                 client->exec();
             }
         }
+        
     }
 
     SdkMutexGuard g(sdkMutex);
@@ -14695,10 +14699,24 @@ void MegaApiImpl::unlinkversions_result(error e)
 
     fireOnRequestFinish(request, std::make_unique<MegaErrorPrivate>(e));
 }
+static int64_t now_us() {
+    auto now = std::chrono::high_resolution_clock::now();
+    return std::chrono::duration_cast<std::chrono::microseconds>(
+        now.time_since_epoch()).count();
+}
+class ScopedTimer {
+public:
+    ScopedTimer(const std::string& t) : start_(now_us()), tag_(t){}
+    ~ScopedTimer() { auto r = now_us() - start_; std::cout<<tag_<<" diff "<<r<<"us"<<std::endl;}
+private:
+    int64_t start_;
+    std::string tag_;
+};
 
 void MegaApiImpl::fetchnodes_result(const Error &e)
 {
     MegaRequestPrivate* request = NULL;
+    ScopedTimer span("MegaApiImpl::fetchnodes_result");
     if (!client->restag)
     {
         for (map<int, MegaRequestPrivate *>::iterator it = requestMap.begin(); it != requestMap.end(); it++)

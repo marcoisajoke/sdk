@@ -1014,7 +1014,7 @@ sharedNode_vector NodeManager::getRootNodes_internal()
     sharedNode_vector nodes;
     if (!mTable)
     {
-        assert(false);
+        //assert(false);
         return nodes;
     }
 

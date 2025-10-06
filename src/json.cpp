@@ -1113,8 +1113,23 @@ void JSONSplitter::clear()
     mFailed = false;
 }
 
+static int64_t now_us() {
+    auto now = std::chrono::high_resolution_clock::now();
+    return std::chrono::duration_cast<std::chrono::microseconds>(
+        now.time_since_epoch()).count();
+}
+class ScopedTimer {
+public:
+    ScopedTimer(const std::string& t) : start_(now_us()), tag_(t){}
+    ~ScopedTimer() { auto r = now_us() - start_; std::cout<<tag_<<r<<"us"<<std::endl;}
+private:
+    int64_t start_;
+    std::string tag_;
+};
+
 m_off_t JSONSplitter::processChunk(std::map<string, std::function<bool (JSON *)> > *filters, const char *data)
 {
+    ScopedTimer mb("JSONSplitter::processChunk");
     if (hasFailed() || hasFinished())
     {
         return 0;
@@ -1423,7 +1438,7 @@ m_off_t JSONSplitter::processChunk(std::map<string, std::function<bool (JSON *)>
             return 0;
         }
     }
-
+    //ScopedTimer fff("process chunck success:"); 1us
     if (filters && !chunkProcessingFinishedSuccessfully(filters))
     {
         LOG_err << "Error finishing the processing of a chunk";

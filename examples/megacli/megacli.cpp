@@ -979,6 +979,7 @@ void DemoApp::chatlink_result(handle h, error e)
     }
 }
 
+
 void DemoApp::chatlinkclose_result(error e)
 {
     if (e)
@@ -10959,7 +10960,16 @@ void megacli()
 #else
     #error non-windows platforms must use the readline library
 #endif
-
+    //std::cout<<"megacli============"<<std::endl;
+    //static std::string json_string = "{\"a\":[{\"a\":\"ua\",\"st\":\"!;Xp2iX\",\"u\":\"zdlxhlGOw20\",\"ua\":[\"^!stbmp\"],\"v\":[\"sAlvmD5ZSb4\"]}],\"w\":\"https://g.api.mega.co.nz/wsc/Unys4VbhgtNAZM-VKceDzw\",\"sn\":\"sAlvmD5ZSb4\"}"; 
+    //if(json_string.length() > 0) {
+        //std::cout<<json_string<<std::endl;
+        //client->jsonsc.begin(json_string.c_str());
+        //client->jsonsc.enterobject();
+        //client->opensctable();
+        //client->procsc();
+        //json_string.clear();
+    //}
     for (;;)
     {
         if (prompt == COMMAND)

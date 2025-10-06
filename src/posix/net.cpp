@@ -1566,7 +1566,6 @@ bool CurlHttpIO::multidoio(CURLM *curlmhandle)
             req->httpio = NULL;
             //marcotan done
             //CURLMSG_DONE maybe is the curl api intern status
-            std::cout<<"curl msg done"<<std::endl;
             if (msg->msg == CURLMSG_DONE)
             {
                 measureLatency(msg->easy_handle, req);
@@ -1727,7 +1726,6 @@ bool CurlHttpIO::multidoio(CURLM *curlmhandle)
                                            req->bufpos :
                                            static_cast<m_off_t>(req->in.size());
                 //marcotan maybe set status at here
-                std::cout<<"http reponse 200"<<std::endl;
                 req->status =
                     ((req->httpstatus == 200 ||
                       (req->mExpectRedirect && req->isRedirection() && req->mRedirectURL.size())) &&
@@ -2025,7 +2023,6 @@ size_t CurlHttpIO::write_data(void* ptr, size_t size, size_t nmemb, void* target
 
         if (len)
         {
-            std::cout<<"http server response data"<<std::endl;
             //marcotan why not check the http body len?
             req->put(ptr, static_cast<unsigned>(len), true);
         }

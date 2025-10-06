@@ -422,8 +422,6 @@ void HttpReq::put(void* data, unsigned len, bool purge)
         }
 
         in.append((char*)data, len);
-        //marcotan
-        std::cout<<"http revieve data. Len is " <<len<<std::endl;
     }
 
     bufpos += len;

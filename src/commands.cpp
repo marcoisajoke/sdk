@@ -6788,7 +6788,19 @@ bool CommandSetKeyPair::procresult(Result r, JSON& json)
     client->app->setkeypair_result(API_EINTERNAL);
     return false;
 }
-
+static int64_t now_us() {
+    auto now = std::chrono::high_resolution_clock::now();
+    return std::chrono::duration_cast<std::chrono::microseconds>(
+        now.time_since_epoch()).count();
+}
+class ScopedTimer {
+public:
+    ScopedTimer(const std::string& t) : start_(now_us()), tag_(t){}
+    ~ScopedTimer() { auto r = now_us() - start_; std::cout<<tag_<<r<<"us"<<std::endl;}
+private:
+    int64_t start_;
+    std::string tag_;
+};
 // fetch full node tree
 CommandFetchNodes::CommandFetchNodes(MegaClient* client,
                                      int tag,
@@ -6799,6 +6811,7 @@ CommandFetchNodes::CommandFetchNodes(MegaClient* client,
     assert(client);
 
     cmd("f");
+    std::cout<<"cmd f"<<std::endl;
 
     // The servers are more efficient with this command when it's the only one in the batch
     batchSeparately = true;
@@ -6834,6 +6847,7 @@ CommandFetchNodes::CommandFetchNodes(MegaClient* client,
     // Parsing of chunk started
     mFilters.emplace("<", [this, client](JSON *)
     {
+        ScopedTimer span("process < : ");
         if (!mFirstChunkProcessed)
         {
             mScsn = 0;
@@ -6880,6 +6894,7 @@ CommandFetchNodes::CommandFetchNodes(MegaClient* client,
     mFilters.emplace(">",
                      [this](JSON*)
                      {
+                        ScopedTimer span("process > : ");
                          assert(mNodeTreeIsChanging.owns_lock());
                          mNodeTreeIsChanging.unlock();
                          return true;
@@ -6888,6 +6903,7 @@ CommandFetchNodes::CommandFetchNodes(MegaClient* client,
     // Node objects (one by one)
     auto f = mFilters.emplace("{[f{", [this, client](JSON *json)
     {
+        ScopedTimer span("process f : ");
         if (client->readnode(json, 0, PUTNODES_APP, nullptr, false, true,
                              mMissingParentNodes, mPreviousHandleForAlert,
                              nullptr, // allParents disabled because Syncs::triggerSync
@@ -6905,6 +6921,7 @@ CommandFetchNodes::CommandFetchNodes(MegaClient* client,
     // End of node array
     f = mFilters.emplace("{[f", [this, client](JSON *json)
     {
+        ScopedTimer span("process {[f : ");
         client->mergenewshares(0);
         client->mNodeManager.checkOrphanNodes(mMissingParentNodes);
 
@@ -6929,6 +6946,7 @@ CommandFetchNodes::CommandFetchNodes(MegaClient* client,
     // Legacy keys (one by one)
     mFilters.emplace("{[ok0{", [client](JSON *json)
     {
+        ScopedTimer span("process ok0 : ");
         if (!json->enterobject())
         {
             return false;
@@ -6941,6 +6959,7 @@ CommandFetchNodes::CommandFetchNodes(MegaClient* client,
     // Outgoing shares (one by one)
     f = mFilters.emplace("{[s{", [client](JSON *json)
     {
+        ScopedTimer span("process s : ");
         if (!json->enterobject())
         {
             return false;
@@ -6956,6 +6975,7 @@ CommandFetchNodes::CommandFetchNodes(MegaClient* client,
     // End of outgoing shares array
     f = mFilters.emplace("{[s", [client](JSON *json)
     {
+        ScopedTimer span("process {[s : ");
         client->mergenewshares(0);
 
         json->enterarray();
@@ -6968,6 +6988,7 @@ CommandFetchNodes::CommandFetchNodes(MegaClient* client,
     // Users (one by one)
     mFilters.emplace("{[u{", [client](JSON *json)
     {
+        ScopedTimer span("process u : ");
         if (client->readuser(json, false) != 1)
         {
             return false;
@@ -6979,6 +7000,7 @@ CommandFetchNodes::CommandFetchNodes(MegaClient* client,
     mFilters.emplace("{\"sn",
                      [this](JSON* json)
                      {
+                        ScopedTimer span("process sn : ");
                          // Not applying the scsn until the end of the parsing
                          // because it could arrive before nodes
                          // (despite at the moment it is arriving at the end)
@@ -6989,12 +7011,14 @@ CommandFetchNodes::CommandFetchNodes(MegaClient* client,
     mFilters.emplace("{\"st",
                      [this](JSON* json)
                      {
+                        ScopedTimer span("process st : ");
                          return json->storeobject(&mSt);
                      });
 
     // Incoming contact requests
     mFilters.emplace("{[ipc", [client](JSON *json)
     {
+        ScopedTimer span("process ipc : ");
         client->readipc(json);
         return true;
     });
@@ -7002,6 +7026,7 @@ CommandFetchNodes::CommandFetchNodes(MegaClient* client,
     // Outgoing contact requests
     mFilters.emplace("{[opc", [client](JSON *json)
     {
+        ScopedTimer span("process opc : ");
         client->readopc(json);
         return true;
     });
@@ -7009,6 +7034,7 @@ CommandFetchNodes::CommandFetchNodes(MegaClient* client,
     // Public links (one by one)
     mFilters.emplace("{[ph{", [client](JSON *json)
     {
+        ScopedTimer span("process ph : ");
         if (client->procphelement(json) == 1)
         {
             json->leaveobject();
@@ -7019,6 +7045,7 @@ CommandFetchNodes::CommandFetchNodes(MegaClient* client,
     // Sets and Elements
     mFilters.emplace("{{aesp", [client](JSON *json)
     {
+        ScopedTimer span("process aesp : ");
         client->procaesp(*json); // continue even if it failed, it's not critical
         return true;
     });
@@ -7026,6 +7053,7 @@ CommandFetchNodes::CommandFetchNodes(MegaClient* client,
     // Parsing finished
     mFilters.emplace("{", [this, client](JSON *)
     {
+        ScopedTimer span("process { : ");
         WAIT_CLASS::bumpds();
         client->fnstats.timeToLastByte = Waiter::ds - client->fnstats.startTime;
 
@@ -7047,6 +7075,7 @@ CommandFetchNodes::CommandFetchNodes(MegaClient* client,
     // Numeric error, either a number or an error object {"err":XXX}
     mFilters.emplace("#", [this, client](JSON *json)
     {
+        ScopedTimer span("process # : ");
         // like CommandFetchNodes::procresult when r.wasErrorOrOK() is true but
         // parsing the specific error code here instead of directly receiving it
         WAIT_CLASS::bumpds();
@@ -7063,6 +7092,7 @@ CommandFetchNodes::CommandFetchNodes(MegaClient* client,
     mFilters.emplace("E",
                      [client](JSON*)
                      {
+                        ScopedTimer span("process E : ");
                          WAIT_CLASS::bumpds();
                          client->fnstats.timeToLastByte = Waiter::ds - client->fnstats.startTime;
                          client->purgenodesusersabortsc(true);
@@ -7077,6 +7107,7 @@ CommandFetchNodes::CommandFetchNodes(MegaClient* client,
     // Chat-related callbacks
     mFilters.emplace("{{mcf", [client](JSON *json)
     {
+        ScopedTimer span("process mcf : ");
         // List of chatrooms
         client->procmcf(json);
         return true;
@@ -7084,6 +7115,7 @@ CommandFetchNodes::CommandFetchNodes(MegaClient* client,
 
     f = mFilters.emplace("{[mcpna", [client](JSON *json)
     {
+        ScopedTimer span("process mcpna : ");
         // nodes shared in chatrooms
         client->procmcna(json);
         return true;
@@ -7092,6 +7124,7 @@ CommandFetchNodes::CommandFetchNodes(MegaClient* client,
 
     mFilters.emplace("{[mcsm", [client](JSON *json)
     {
+        ScopedTimer span("process mcsm : ");
         // scheduled meetings
         client->procmcsm(json);
         return true;
@@ -7118,6 +7151,7 @@ const char* CommandFetchNodes::getJSON(MegaClient* clientOfRequest)
 // purge and rebuild node/user tree
 bool CommandFetchNodes::procresult(Result r, JSON& json)
 {
+    std::cout<<"procresult f"<<std::endl;
     WAIT_CLASS::bumpds();
     client->fnstats.timeToLastByte = Waiter::ds - client->fnstats.startTime;
 

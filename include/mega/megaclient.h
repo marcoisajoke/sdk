@@ -2086,6 +2086,7 @@ public:
 
     // Server-MegaClient request JSON and processing state flag ("processing a element")
     JSON jsonsc;
+    std::string json_string_mock = "{\"a\":[{\"a\":\"ua\",\"st\":\"!;Xp2iX\",\"u\":\"zdlxhlGOw20\",\"ua\":[\"^!stbmp\"],\"v\":[\"sAlvmD5ZSb4\"]}],\"w\":\"https://g.api.mega.co.nz/wsc/Unys4VbhgtNAZM-VKceDzw\",\"sn\":\"sAlvmD5ZSb4\"}";
     bool insca;
     bool insca_notlast;
 
