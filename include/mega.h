@@ -31,6 +31,7 @@
 
 // project types
 #include "mega/types.h"
+#include "mega/common/trie_tree.h"
 
 // project includes
 #include "mega/account.h"
@@ -88,6 +89,7 @@
 
 #include "mega/gfx/freeimage.h"
 #include "mega/gfx/GfxProcCG.h"
+
 namespace mega {
 
 class TimeSpan {

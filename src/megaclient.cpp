@@ -1964,7 +1964,22 @@ MegaClient::MegaClient(MegaApp* a,
         fsaccess = std::make_unique<LinuxFileSystemAccess>();
     }
 #endif
-    mJourneyId =
+    f_node_key_2_index.insert("", F_NODE_IDX_EMPTY);
+    f_node_key_2_index.insert("h", F_NODE_IDX_H);
+    f_node_key_2_index.insert("p", F_NODE_IDX_P);
+    f_node_key_2_index.insert("u", F_NODE_IDX_U);
+    f_node_key_2_index.insert("t", F_NODE_IDX_T);
+    f_node_key_2_index.insert("a", F_NODE_IDX_A);
+    f_node_key_2_index.insert("k", F_NODE_IDX_K);
+    f_node_key_2_index.insert("s", F_NODE_IDX_S);
+    f_node_key_2_index.insert("i", F_NODE_IDX_I);
+    f_node_key_2_index.insert("ts", F_NODE_IDX_TS);
+    f_node_key_2_index.insert("fa", F_NODE_IDX_FA);
+    f_node_key_2_index.insert("r", F_NODE_IDX_R);
+    f_node_key_2_index.insert("sk", F_NODE_IDX_SK);
+    f_node_key_2_index.insert("su", F_NODE_IDX_SU);
+    f_node_key_2_index.insert("sts", F_NODE_IDX_STS);
+    mJourneyId 
         std::make_unique<JourneyID>(fsaccess, dbaccess ? dbaccess->rootPath() : LocalPath());
 
     mNodeManager.reset();
@@ -10444,12 +10459,12 @@ int MegaClient::readnode(JSON* j,
         m_time_t ts = -1, sts = -1;
         nameid name;
         int nni = -1;
-
+F_NODE_IDX_T
         while ((name = j->getnameid()) != EOO)
         {
             switch (name)
             {
-                case makeNameid("h"): // new node: handle
+                case F_NODE_IDX_H: // new node: handle
                     h = j->gethandle();
                     if (priorActionpacketDeletedNode && firstHandleMatchesDelete)
                     {

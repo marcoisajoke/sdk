@@ -31,6 +31,8 @@
 namespace mega {
 
 std::atomic<bool> gLogJSONRequests{false};
+static bool null_skip_char[256] = {0};
+
 
 #define JSON_verbose if (gLogJSONRequests) LOG_verbose
 
@@ -40,7 +42,12 @@ std::atomic<bool> gLogJSONRequests{false};
 //bypass int
 //bypass [] {}
 //get string value
-
+void JSON::init() {
+    null_skip_char[(int)','] = true;
+    null_skip_char[(int)']'] = true;
+    null_skip_char[(int)'}'] = true;
+    
+}
 bool JSON::storeobject(string* s)
 {
     int openobject[2] = { 0 };
@@ -150,6 +157,17 @@ bool JSON::storeKeyValueFromObject(string& key, string& value)
 bool JSON::skipnullvalue()
 {
     // this applies only to values, after ':'
+    if(!pos) {
+        return false;
+    }
+    if(null_skip_char[*pos]) {
+        pos = pos + (*pos == ',');
+        return true;
+    }
+    return false;
+    
+
+    /*
     if (!pos)
         return false;
 
@@ -178,7 +196,7 @@ bool JSON::skipnullvalue()
         case ',':     // null value, i.e.  "foo":null,
             ++pos;
         // fall through
-        case ']':     // null value, i.e.  "foo":null]
+        case ']':     // null value, i.e.  "foo":null]      
         case '}':     // null value, i.e.  "foo":null}
             pos += 4;
             return true;
@@ -187,6 +205,7 @@ bool JSON::skipnullvalue()
             return false;
         }
     }
+        */
 }
 
 bool JSON::isnumeric()
@@ -282,11 +301,11 @@ nameid JSON::getNameidSkipNull(bool skipnullvalues)
     const char* ptr = pos;
     nameid id = 0;
 
-    //marcotan key and value should be split
     if (*ptr == ',' || *ptr == ':')
     {
         ptr++;
     }
+    //ptr = ptr + (*ptr == ',' || *ptr == ':');
 
     if (*ptr++ == '"')
     {

@@ -46,6 +46,7 @@
 #include "treeproc.h"
 #include "user.h"
 #include "useralerts.h"
+#include "mega/common/trie_tree.h"
 
 // FUSE support.
 #include <mega/common/client_adapter.h>
@@ -507,7 +508,24 @@ struct DynamicMessageNotification
     std::map<std::string, std::string> callToAction2;
     std::map<std::string, std::map<std::string, std::string>> renderModes;
 };
-
+enum F_NODE_IDX {
+    F_NODE_IDX_EMPTY,
+    F_NODE_IDX_H,
+    F_NODE_IDX_P,
+    F_NODE_IDX_U,
+    F_NODE_IDX_T,
+    F_NODE_IDX_A,
+    F_NODE_IDX_K,
+    F_NODE_IDX_S,
+    F_NODE_IDX_I,
+    F_NODE_IDX_TS,
+    F_NODE_IDX_FA,
+    F_NODE_IDX_R,
+    F_NODE_IDX_SK,
+    F_NODE_IDX_SU,
+    F_NODE_IDX_STS,
+    
+}
 class MEGA_API MegaClient
 {
 public:
@@ -529,6 +547,8 @@ public:
 
     // timestamp of the creation of the account
     m_time_t accountsince;
+
+    Trie f_node_key_2_index;
 
     // Global Multi-Factor Authentication enabled
     bool gmfa_enabled;
@@ -2006,6 +2026,8 @@ public:
     // Either way there can still be a lot of historic actionpackets to follow since that snaphot, especially if the user has not been online for a long time.
     bool fetchingnodes;
     int fetchnodestag;
+
+    
 
     // set true after fetchnodes and catching up on actionpackets, stays true after that.
     std::atomic<bool> statecurrent;

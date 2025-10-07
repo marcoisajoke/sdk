@@ -33,17 +33,22 @@ struct MEGA_API JSON
     JSON()
       : pos(nullptr)
     {
+        init();
     }
 
     explicit JSON(const string& data)
       : pos(data.c_str())
     {
+        init();
     }
 
     explicit JSON(const char* data)
       : pos(data)
     {
+        init();
     }
+
+    void init();
 
     const char* pos;
 
