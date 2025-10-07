@@ -1979,7 +1979,7 @@ MegaClient::MegaClient(MegaApp* a,
     f_node_key_2_index.insert("sk", F_NODE_IDX_SK);
     f_node_key_2_index.insert("su", F_NODE_IDX_SU);
     f_node_key_2_index.insert("sts", F_NODE_IDX_STS);
-    mJourneyId 
+    
         std::make_unique<JourneyID>(fsaccess, dbaccess ? dbaccess->rootPath() : LocalPath());
 
     mNodeManager.reset();
@@ -10457,10 +10457,10 @@ int MegaClient::readnode(JSON* j,
         accesslevel_t rl = ACCESS_UNKNOWN;
         m_off_t s = NEVER;
         m_time_t ts = -1, sts = -1;
-        nameid name;
+        int name;
         int nni = -1;
-F_NODE_IDX_T
-        while ((name = j->getnameid()) != EOO)
+        char buf[32] = {0};
+        while ((name = j->getnameid(&f_node_key_2_index, buf)) != EOO)
         {
             switch (name)
             {
@@ -10472,57 +10472,58 @@ F_NODE_IDX_T
                         priorActionpacketDeletedNode = nullptr;
                     }
                     break;
-
-                case makeNameid("p"): // parent node
+                case F_NODE_IDX_P:
+                //case makeNameid("p"): // parent node
                     ph = j->gethandle();
                     break;
-
-                case name_id::u: // owner user
+                case F_NODE_IDX_U:
+//                case name_id::u: // owner user
                     u = j->gethandle(USERHANDLE);
                     break;
-
-                case makeNameid("t"): // type
+                case F_NODE_IDX_T:
+//                case makeNameid("t"): // type
                     t = (nodetype_t)j->getint();
                     break;
-
-                case makeNameid("a"): // attributes
+                case F_NODE_IDX_A:
+//                case makeNameid("a"): // attributes
                     a = j->getvalue();
                     break;
-
-                case makeNameid("k"): // key(s)
+                case F_NODE_IDX_K:
+//                case makeNameid("k"): // key(s)
                     nodeKey = j->getvalue();
                     break;
-
-                case makeNameid("s"): // file size
+                case F_NODE_IDX_S:
+//                case makeNameid("s"): // file size
                     s = j->getint();
                     break;
-
-                case makeNameid("i"): // related source NewNode index
+                case F_NODE_IDX_I:
+//                case makeNameid("i"): // related source NewNode index
                     nni = int(j->getint());
                     break;
-
-                case makeNameid("ts"): // actual creation timestamp
+                case F_NODE_IDX_TS:
+//                case makeNameid("ts"): // actual creation timestamp
                     ts = j->getint();
                     break;
-
-                case makeNameid("fa"): // file attributes
+                case F_NODE_IDX_FA:
+//                case makeNameid("fa"): // file attributes
                     fa = j->getvalue();
                     break;
 
                     // inbound share attributes
-                case makeNameid("r"): // share access level
+                case F_NODE_IDX_R:
+               // case makeNameid("r"): // share access level
                     rl = (accesslevel_t)j->getint();
                     break;
-
-                case makeNameid("sk"): // share key
+                case F_NODE_IDX_SK:
+//                case makeNameid("sk"): // share key
                     sk = j->getvalue();
                     break;
-
-                case makeNameid("su"): // sharing user
+                case F_NODE_IDX_SU:
+//                case makeNameid("su"): // sharing user
                     su = j->gethandle(USERHANDLE);
                     break;
-
-                case makeNameid("sts"): // share timestamp
+                case F_NODE_IDX_STS:
+//                case makeNameid("sts"): // share timestamp
                     sts = j->getint();
                     break;
 

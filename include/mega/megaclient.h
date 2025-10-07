@@ -525,7 +525,7 @@ enum F_NODE_IDX {
     F_NODE_IDX_SU,
     F_NODE_IDX_STS,
     
-}
+};
 class MEGA_API MegaClient
 {
 public:

@@ -237,6 +237,10 @@ nameid JSON::getnameid(const char* ptr) const
     return id;
 }
 
+int JSON::getnameid(Trie* t, char* buf) {
+    return getNameidSkipNull(true, t, buf);
+}
+
 nameid JSON::getnameid()
 {
     return getNameidSkipNull(true);
@@ -292,7 +296,48 @@ std::string JSON::getnameWithoutAdvance() const
 
     return name;
 }
+int JSON::getNameidSkipNull(bool skipnullvalues, Trie* t, char* buf) {
+    const char* ptr = pos;
+    char* p = buf;
+    int id = 0;
 
+    if (*ptr == ',' || *ptr == ':')
+    {
+        ptr++;
+    }
+    //ptr = ptr + (*ptr == ',' || *ptr == ':');
+
+    if (*ptr++ == '"')
+    {
+        while (*ptr && *ptr != '"')
+        {
+            //id = (id << 8) + static_cast<nameid>(*ptr++);
+            *p = *ptr;
+            p++;
+            ptr++;
+        }
+        *p = 0;
+        id = t->search(buf);
+
+        assert(*ptr == '"'); // if either assert fails, check the json syntax, it might be something new/changed
+        pos = ptr + 1;
+
+        //key and value should be split logic
+        if (*pos == ':' || *pos == ',' )
+        {
+            pos++;
+        }
+        else
+        {
+            // don't skip the char if we're at the end of a structure eg. actionpacket with only {"a":"xyz"}
+            assert(*pos == '}' || *pos == ']');
+        }
+    }
+
+    bool skippedNull = id && skipnullvalues && skipnullvalue();
+
+    return skippedNull ? getnameid(t, buf) : id;
+}
 // pos points to [,]"name":...
 // returns nameid and repositons pos after :
 // no unescaping supported
