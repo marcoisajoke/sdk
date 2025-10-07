@@ -172,6 +172,7 @@ m_off_t Request::processChunk(const char* chunk, MegaClient *client)
     //std::cout<<"========processChunk========="<<std::endl;
     //std::cout<<chunk<<std::endl;
     m_off_t consumed = 0;
+    std::cout<<chunk<<std::endl;
     TimeSpan span("============== processChunk process time: ");
     Command& cmd = *cmds[0];
     client->restag = cmd.tag;
