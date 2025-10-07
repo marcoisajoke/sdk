@@ -30,7 +30,7 @@ private:
     
     // 索引到字符的转换
     char indexToChar(int index) const {
-        return 'a' + index;
+        return 'a' + (char)index;
     }
 
 public:
@@ -69,9 +69,9 @@ public:
     }
     
     // 删除单词
-    bool remove(const std::string& word) {
-        return removeHelper(root.get(), word, 0);
-    }
+    //bool remove(const std::string& word) {
+    //    return removeHelper(root.get(), word, 0);
+    //}
     
     // 获取所有存储的单词
     std::vector<std::string> getAllWords() const {
@@ -83,7 +83,7 @@ public:
     
     // 打印Trie树结构
     void printTrie() const {
-        printTrieHelper(root.get(), "", 0);
+        //printTrieHelper(root.get(), "", 0);
     }
 
 private:
@@ -105,6 +105,7 @@ private:
     }
     
     // 递归删除辅助函数
+    /*
     bool removeHelper(TrieNode* node, const std::string& word, int depth) {
         if (node == nullptr) {
             return false;
@@ -133,7 +134,7 @@ private:
         }
         
         return false;
-    }
+    }*/
     
     // 检查节点是否为空（没有子节点）
     bool isEmptyNode(TrieNode* node) const {
@@ -166,6 +167,7 @@ private:
     }
     
     // 打印Trie树辅助函数
+    /*
     void printTrieHelper(TrieNode* node, const std::string& prefix, int level) const {
         if (node == nullptr) {
             return;
@@ -185,5 +187,6 @@ private:
             }
         }
     }
+    */
 };
 }

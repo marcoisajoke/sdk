@@ -318,6 +318,9 @@ int JSON::getNameidSkipNull(bool skipnullvalues, Trie* t, char* buf) {
         }
         *p = 0;
         id = t->search(buf);
+        if(id == -1) {
+            id = 1;
+        }
 
         assert(*ptr == '"'); // if either assert fails, check the json syntax, it might be something new/changed
         pos = ptr + 1;

@@ -510,6 +510,7 @@ struct DynamicMessageNotification
 };
 enum F_NODE_IDX {
     F_NODE_IDX_EMPTY,
+    F_NODE_IDX_UND,
     F_NODE_IDX_H,
     F_NODE_IDX_P,
     F_NODE_IDX_U,

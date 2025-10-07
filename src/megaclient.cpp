@@ -1979,7 +1979,7 @@ MegaClient::MegaClient(MegaApp* a,
     f_node_key_2_index.insert("sk", F_NODE_IDX_SK);
     f_node_key_2_index.insert("su", F_NODE_IDX_SU);
     f_node_key_2_index.insert("sts", F_NODE_IDX_STS);
-    
+    mJourneyId = 
         std::make_unique<JourneyID>(fsaccess, dbaccess ? dbaccess->rootPath() : LocalPath());
 
     mNodeManager.reset();
@@ -10431,6 +10431,71 @@ int MegaClient::readnodes(JSON* j, int notify, putsource_t source, vector<NewNod
     return j->leavearray();
 }
 
+static bool idx_h_func(JSON* j, void* h) {
+    *(handle*)h = j->gethandle();
+    return true;
+}
+static bool idx_p_func(JSON* j, void* ph) {
+    *(handle*)ph = j->gethandle();
+    return true;
+}
+static bool idx_u_func(JSON* j, void* u) {
+    *(handle*)u = j->gethandle(8);
+    return true;
+}
+static bool idx_t_func(JSON* j, void* t) {
+    *(nodetype_t*)t = (nodetype_t)j->getint();
+    return true;
+}
+static bool idx_a_func(JSON* j, void* a) {
+    *(char**)a = (char*)(j->getvalue());
+    return true;
+}
+static bool idx_k_func(JSON* j, void* nodeKey) {
+    *(char**)nodeKey = (char*)(j->getvalue());
+    return true;
+}
+static bool idx_s_func(JSON* j, void* s) {
+    *(int64_t*)s = j->getint();
+    return true;
+}
+static bool idx_i_func(JSON* j, void* nni) {
+    *(int64_t*)nni = int(j->getint());
+    return true;
+}
+static bool idx_ts_func(JSON* j, void* ts) {
+    *(int64_t*)ts = j->getint();
+    return true;
+}
+static bool idx_fa_func(JSON* j, void* fa) {
+    *(char**)fa = (char*)(j->getvalue());
+    return true;
+}
+static bool idx_r_func(JSON* j, void* rl) {
+    *(accesslevel_t*)rl = (accesslevel_t)j->getint();
+    return true;
+}
+static bool idx_sk_func(JSON* j, void* sk) {
+    *(char**)sk = (char*)(j->getvalue());
+    return true;
+}
+static bool idx_su_func(JSON* j, void* su) {
+    *(handle*)su = j->gethandle(8);
+    return true;
+}
+static bool idx_sts_func(JSON* j, void* sts) {
+    *(int64_t*)sts = j->getint();
+    return true;
+}
+static bool idx_und_func(JSON* j, void* nn) {
+    return j->storeobject();
+}
+static bool idx_0_func(JSON* j, void* n) {
+    return true;
+}
+
+typedef bool (*readNodeStateFunc)(JSON* j, void* nn);
+
 int MegaClient::readnode(JSON* j,
                          int notify,
                          putsource_t /*source*/,
@@ -10444,7 +10509,25 @@ int MegaClient::readnode(JSON* j,
                          bool* firstHandleMatchesDelete)
 {
     std::shared_ptr<Node> n;
-
+    static std::vector<readNodeStateFunc> func_arr = {
+        idx_0_func,
+        idx_und_func,
+        idx_h_func,
+        idx_p_func,
+        idx_u_func,
+        idx_t_func,
+        idx_a_func,
+        idx_k_func,
+        idx_s_func,
+        idx_i_func,
+        idx_ts_func,
+        idx_fa_func,
+        idx_r_func,
+        idx_sk_func,
+        idx_su_func,
+        idx_sts_func,
+    };
+    
     if (j->enterobject())
     {
         handle h = UNDEF, ph = UNDEF;
@@ -10460,8 +10543,31 @@ int MegaClient::readnode(JSON* j,
         int name;
         int nni = -1;
         char buf[32] = {0};
+        std::vector<void*> func_data {
+            &h,
+            &h,
+            &h,
+            &ph,
+            &u,
+            &t,
+            &a,
+            &nodeKey,
+            &s,
+            &nni,
+            &ts,
+            &fa,
+            &rl,
+            &sk,
+            &su,
+            &sts,           
+        };
         while ((name = j->getnameid(&f_node_key_2_index, buf)) != EOO)
         {
+            if(func_arr[name](j, func_data[name])) {
+                continue;
+            }
+            return 2;
+            /*
             switch (name)
             {
                 case F_NODE_IDX_H: // new node: handle
@@ -10533,6 +10639,7 @@ int MegaClient::readnode(JSON* j,
                         return 2;
                     }
             }
+                    */
         }
 
         if (ISUNDEF(h))
@@ -10541,6 +10648,11 @@ int MegaClient::readnode(JSON* j,
         }
         else
         {
+            if (priorActionpacketDeletedNode && firstHandleMatchesDelete)
+            {
+                *firstHandleMatchesDelete = h == priorActionpacketDeletedNode->nodehandle;
+                priorActionpacketDeletedNode = nullptr;
+            }
             if (t == TYPE_UNKNOWN)
             {
                 warn("Unknown node type");
