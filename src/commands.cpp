@@ -6797,7 +6797,7 @@ CommandFetchNodes::CommandFetchNodes(MegaClient* client,
                                      const NodeHandle partialFetchRoot)
 {
     assert(client);
-
+    std::cout<<"send cmd f"<<std::endl;
     cmd("f");
 
     // The servers are more efficient with this command when it's the only one in the batch
@@ -6888,6 +6888,8 @@ CommandFetchNodes::CommandFetchNodes(MegaClient* client,
     // Node objects (one by one)
     auto f = mFilters.emplace("{[f{", [this, client](JSON *json)
     {
+        //this->cc++;
+        //std::cout<<this->cc<<std::endl;
         if (client->readnode(json, 0, PUTNODES_APP, nullptr, false, true,
                              mMissingParentNodes, mPreviousHandleForAlert,
                              nullptr, // allParents disabled because Syncs::triggerSync

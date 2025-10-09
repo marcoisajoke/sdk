@@ -165,6 +165,14 @@ m_off_t Request::processChunk(const char* chunk, MegaClient *client)
         return 0;
     }
 
+    static TimeSpan* p = nullptr;
+    if(p != nullptr) {
+        delete p;
+        p = nullptr;
+    }
+
+    TimeSpan span("processChunk", &client->process_chunk_obs);
+
     // Only fetchnodes command is currently supported
     assert(isFetchNodes());
 
@@ -215,7 +223,7 @@ m_off_t Request::processChunk(const char* chunk, MegaClient *client)
         cmds[0].reset();
         clear();
     }
-
+    p = new TimeSpan("between chunk", &client->between_process_chunk_obs);
     return consumed;
 }
 

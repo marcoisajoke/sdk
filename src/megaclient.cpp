@@ -3227,6 +3227,11 @@ void MegaClient::exec()
         if (!scpaused && jsonsc.pos)
         {
             // FIXME: reload in case of bad JSON
+            static TimeSpan* p = nullptr;
+            if(p != nullptr) {
+                delete p;
+                p = nullptr;
+            }
             if (procsc())
             {
                 // completed - initiate next SC request
@@ -3234,6 +3239,7 @@ void MegaClient::exec()
                 pendingsc.reset();
                 btsc.reset();
             }
+            p = new TimeSpan("between procsc", &this->between_procsc_obs);
         }
 
         if (!pendingsc && !pendingscUserAlerts && scsn.ready() && btsc.armed() && !mBlocked)
@@ -3290,6 +3296,7 @@ void MegaClient::exec()
                 }
 
                 pendingsc->type = REQ_JSON;
+                std::cout<<"pending sc post http"<<std::endl;
                 pendingsc->post(this);
                 app->notify_network_activity(NetworkActivityChannel::SC,
                                              NetworkActivityType::REQUEST_SENT,
@@ -5231,6 +5238,7 @@ void MegaClient::httprequest(const char *url, int method, bool binary, const cha
 // process server-client request
 bool MegaClient::procsc()
 {
+    TimeSpan span("procsc", &this->procsc_obs);
     // prevent the sync thread from looking things up while we change the tree
     std::unique_lock<recursive_mutex> nodeTreeIsChanging(nodeTreeMutex);
 

@@ -509,6 +509,7 @@ protected:
     string mSt;
 
     std::unique_lock<recursive_mutex> mNodeTreeIsChanging;
+    uint64_t cc;
     bool mFirstChunkProcessed = false;
 };
 

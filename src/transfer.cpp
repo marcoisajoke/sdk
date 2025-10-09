@@ -2464,6 +2464,7 @@ bool DirectReadSlot::doio()
                         mThroughput[connectionNum].second = 0;
                         req->in.reserve(mMaxChunkSize + (mMaxChunkSize/2));
                         req->post(mDr->drn->client); // status will go to inflight or fail
+                        std::cout<<"req continue post"<<std::endl;
                         LOG_verbose << req->getLogName() << "DirectReadSlot [conn " << connectionNum
                                     << "] POST done (new request status = " << req->status.load()
                                     << ")"

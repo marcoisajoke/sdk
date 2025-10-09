@@ -51,6 +51,7 @@
 #include <mega/common/client_adapter.h>
 #include <mega/fuse/common/service.h>
 
+#include "mega/types.h"
 #include <optional>
 
 namespace mega {
@@ -511,6 +512,11 @@ struct DynamicMessageNotification
 class MEGA_API MegaClient
 {
 public:
+    TimeSpanObs process_chunk_obs={"processChunk"};
+    TimeSpanObs between_process_chunk_obs={"between processChunk"};
+    TimeSpanObs post_obs={"post http"};
+    TimeSpanObs procsc_obs={"proc"};
+    TimeSpanObs between_procsc_obs={"between procsc"};
     // own identity
     handle me;
     string uid;

@@ -75,6 +75,42 @@ namespace mega {
 #include <thread>
 
 namespace mega {
+class TimeSpanObs {
+public:
+    TimeSpanObs(const std::string& t) {
+        tag_ = t;
+        diff_us = 0;
+    }
+    void printObs() {
+        std::cout<<tag_<<" total use "<<diff_us<<"us"<<std::endl;
+    }
+    std::string tag_;
+    int64_t diff_us;
+};
+class TimeSpan {
+public:
+    TimeSpan(const std::string& t, TimeSpanObs* o) : start_(now_us()), tag_(t), obs(o){
+        std::cout<<"------------------"<<tag_<<" begin ----------------"<<std::endl; 
+    }
+    ~TimeSpan() { auto r = now_us() - start_; std::cout<<"------------------"
+        <<tag_<<" use "<<r<<"us"<<" end ----------------"<<std::endl;
+        if(obs != nullptr) {
+            obs->diff_us += r;
+        }
+    }
+public:
+    static int64_t now_us() {
+        auto now = std::chrono::high_resolution_clock::now();
+        return std::chrono::duration_cast<std::chrono::microseconds>(
+            now.time_since_epoch()).count();
+    }
+    int64_t start_;
+    std::string tag_;
+    TimeSpanObs* obs;
+};
+}
+
+namespace mega {
 
 // import these select types into the namespace directly, to avoid adding std::byte from c++17
 using std::string;

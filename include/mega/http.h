@@ -339,6 +339,7 @@ struct MEGA_API HttpReq
     httpmethod_t method;
     contenttype_t type;
     int timeoutms;
+    TimeSpan* span;
 
     string posturl;
 

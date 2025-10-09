@@ -1269,7 +1269,6 @@ void CurlHttpIO::post(HttpReq* req, const char* data, unsigned len)
     httpctx->isCachedIp = false;
     httpctx->d = (req->type == REQ_JSON || req->method == METHOD_NONE) ? API : ((data ? len : req->out->size()) ? PUT : GET);
     req->httpiohandle = (void*)httpctx;
-
     bool validrequest = true;
     if ((proxyurl.size() && !proxyhost.size()) // malformed proxy string
         || (validrequest =
@@ -1723,6 +1722,8 @@ bool CurlHttpIO::multidoio(CURLM *curlmhandle)
                 m_off_t actualLength = req->buf != nullptr || req->mChunked ?
                                            req->bufpos :
                                            static_cast<m_off_t>(req->in.size());
+                delete req->span;
+                
                 req->status =
                     ((req->httpstatus == 200 ||
                       (req->mExpectRedirect && req->isRedirection() && req->mRedirectURL.size())) &&

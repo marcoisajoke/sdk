@@ -95,6 +95,7 @@ using std::ofstream;
 using std::setw;
 using std::hex;
 using std::dec;
+static TimeSpan* pp = nullptr;
 
 MegaClient* client;
 MegaClient* clientFolder;
@@ -619,6 +620,7 @@ void DemoApp::syncs_restored(SyncError syncError)
                   << ": "
                   << SyncConfig::syncErrorToStr(syncError)
                   << endl;
+    delete pp;
 }
 
 void DemoApp::syncupdate_scanning(bool active)
@@ -5694,6 +5696,7 @@ struct Login
     {
         assert(succeeded);
         cout << "Retrieving account after a succesful login..." << endl;
+        pp = new TimeSpan("fetchNodes", nullptr);
         mc->fetchnodes(false, true, false);
         succeeded = false;
     }

@@ -7306,7 +7306,12 @@ void Syncs::resumeSyncsOnStateCurrent_inThread()
             }
         }
     }
-
+    
+    mClient.process_chunk_obs.printObs();
+    mClient.between_process_chunk_obs.printObs();
+    mClient.post_obs.printObs();
+    mClient.procsc_obs.printObs();
+    mClient.between_procsc_obs.printObs();
     mClient.app->syncs_restored(NO_SYNC_ERROR);
 }
 
