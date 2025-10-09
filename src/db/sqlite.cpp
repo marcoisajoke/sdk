@@ -118,6 +118,7 @@ bool SqliteDbAccess::checkDbFileAndAdjustLegacy(FileSystemAccess& fsAccess, cons
 
 SqliteDbTable *SqliteDbAccess::open(PrnGen &rng, FileSystemAccess &fsAccess, const string &name, const int flags, DBErrorCallback dBErrorCallBack)
 {
+    std::cout<<"db open "<<name<<std::endl;
     sqlite3 *db = nullptr;
     auto dbPath = databasePath(fsAccess, name, DB_VERSION);
     if (!openDBAndCreateStatecache(&db, fsAccess, name, dbPath, flags))
@@ -335,6 +336,9 @@ bool SqliteDbAccess::openDBAndCreateStatecache(sqlite3 **db, FileSystemAccess &f
 
 #if !(TARGET_OS_IPHONE)
     result = sqlite3_exec(*db, "PRAGMA journal_mode=WAL;", nullptr, nullptr, nullptr);
+    //marcotan optimal change fsync straterge
+    result = sqlite3_exec(*db, "PRAGMA synchronous = NORMAL;", nullptr, nullptr, nullptr);
+    result = sqlite3_exec(*db, "PRAGMA cache_size = -64000;", nullptr, nullptr, nullptr);
     if (result)
     {
         sqlite3_close(*db);
@@ -673,6 +677,7 @@ bool SqliteDbTable::inTransaction() const
 // set cursor to first record
 void SqliteDbTable::rewind()
 {
+    //TimeSpan tt("db rewind: ");
     if (!db)
     {
         return;
@@ -695,6 +700,7 @@ void SqliteDbTable::rewind()
 // retrieve next record through cursor
 bool SqliteDbTable::next(uint32_t* index, string* data)
 {
+    std::cout<<"db next "<< dbfile<<std::endl;
     if (!db)
     {
         return false;
@@ -728,6 +734,8 @@ bool SqliteDbTable::next(uint32_t* index, string* data)
 // retrieve record by index
 bool SqliteDbTable::get(uint32_t index, string* data)
 {
+    std::cout<<"get "<< index <<" from " << dbfile<<std::endl;
+    //TimeSpan tt("db get:");
     if (!db)
     {
         return false;
@@ -761,6 +769,8 @@ bool SqliteDbTable::get(uint32_t index, string* data)
 // add/update record by index
 bool SqliteDbTable::put(uint32_t index, char* data, unsigned len)
 {
+    //std::cout<<"put "<< index << " " << dbfile<<std::endl;
+    //TimeSpan tt("db put: ");
     if (!db)
     {
         return false;
@@ -801,6 +811,8 @@ bool SqliteDbTable::put(uint32_t index, char* data, unsigned len)
 // delete record by index
 bool SqliteDbTable::del(uint32_t index)
 {
+    //std::cout<<"del " << dbfile<<std::endl;
+    //TimeSpan tt("db del: ");
     if (!db)
     {
         return false;
@@ -833,6 +845,8 @@ bool SqliteDbTable::del(uint32_t index)
 // truncate table
 void SqliteDbTable::truncate()
 {
+    //std::cout<<"truncate " << dbfile<<std::endl;
+    //TimeSpan tt("db truncate: ");
     if (!db)
     {
         return;
@@ -848,6 +862,8 @@ void SqliteDbTable::truncate()
 // begin transaction
 void SqliteDbTable::begin()
 {
+    //std::cout<<"begin " << dbfile<<std::endl;
+    //TimeSpan tt(" db begin: ");
     if (!db)
     {
         return;
@@ -862,6 +878,8 @@ void SqliteDbTable::begin()
 // commit transaction
 void SqliteDbTable::commit()
 {
+    //std::cout<<"commit " << dbfile<<std::endl;
+    //TimeSpan tt("=========== db commit:  ");
     if (!db)
     {
         return;

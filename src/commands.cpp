@@ -6797,8 +6797,32 @@ CommandFetchNodes::CommandFetchNodes(MegaClient* client,
                                      const NodeHandle partialFetchRoot)
 {
     assert(client);
-
+    /*
+    cmd f        
+    process < : 1224us
+    process f : 327us
+    process f : 23us
+    process f : 14us
+    process f : 381us
+    process f : 45us
+    process f : 36us
+    process f : 26us
+    process f : 74us
+    process {[f : 0us
+    process {[s : 0us
+    process {[s : 1us
+    process opc : 5us
+    process ipc : 1us
+    process ph : 31us
+    process u : 37us
+    process aesp : 40us
+    process sn : 0us
+    process st : 0us
+    process { : 1776us
+    process > : 0us
+    */
     cmd("f");
+    std::cout<<"cmd f"<<std::endl;
 
     // The servers are more efficient with this command when it's the only one in the batch
     batchSeparately = true;
@@ -6834,6 +6858,7 @@ CommandFetchNodes::CommandFetchNodes(MegaClient* client,
     // Parsing of chunk started
     mFilters.emplace("<", [this, client](JSON *)
     {
+        //TimeSpan span("process < : ");
         if (!mFirstChunkProcessed)
         {
             mScsn = 0;
@@ -6860,6 +6885,7 @@ CommandFetchNodes::CommandFetchNodes(MegaClient* client,
             {
                 // reset sc database for brand new node tree (note that we may be reloading mid-session)
                 LOG_debug << "Resetting sc database";
+                //TimeSpan ddddd("db file truncate: ");
                 client->sctable->truncate();
                 client->sctable->commit();
                 client->sctable->begin();
@@ -6880,6 +6906,7 @@ CommandFetchNodes::CommandFetchNodes(MegaClient* client,
     mFilters.emplace(">",
                      [this](JSON*)
                      {
+                        //TimeSpan span("process > : ");
                          assert(mNodeTreeIsChanging.owns_lock());
                          mNodeTreeIsChanging.unlock();
                          return true;
@@ -6888,13 +6915,19 @@ CommandFetchNodes::CommandFetchNodes(MegaClient* client,
     // Node objects (one by one)
     auto f = mFilters.emplace("{[f{", [this, client](JSON *json)
     {
-        if (client->readnode(json, 0, PUTNODES_APP, nullptr, false, true,
-                             mMissingParentNodes, mPreviousHandleForAlert,
-                             nullptr, // allParents disabled because Syncs::triggerSync
-                             // does nothing when MegaClient::fetchingnodes is true
-                             nullptr, nullptr) != 1)
-        {
-            return false;
+        //TimeSpan span("process f : ");
+        
+        auto pos = json->pos;
+        for(int i=0; i<1000000; i++) {
+            json->pos = pos;
+            if (client->readnode(json, 0, PUTNODES_APP, nullptr, false, true,
+                                mMissingParentNodes, mPreviousHandleForAlert,
+                                nullptr, // allParents disabled because Syncs::triggerSync
+                                // does nothing when MegaClient::fetchingnodes is true
+                                nullptr, nullptr) != 1)
+            {
+                return false;
+            }
         }
         return json->leaveobject();
     });
@@ -6905,6 +6938,7 @@ CommandFetchNodes::CommandFetchNodes(MegaClient* client,
     // End of node array
     f = mFilters.emplace("{[f", [this, client](JSON *json)
     {
+        //TimeSpan span("process {[f : ");
         client->mergenewshares(0);
         client->mNodeManager.checkOrphanNodes(mMissingParentNodes);
 
@@ -6929,6 +6963,7 @@ CommandFetchNodes::CommandFetchNodes(MegaClient* client,
     // Legacy keys (one by one)
     mFilters.emplace("{[ok0{", [client](JSON *json)
     {
+        //TimeSpan span("process ok0 : ");
         if (!json->enterobject())
         {
             return false;
@@ -6941,6 +6976,7 @@ CommandFetchNodes::CommandFetchNodes(MegaClient* client,
     // Outgoing shares (one by one)
     f = mFilters.emplace("{[s{", [client](JSON *json)
     {
+        //TimeSpan span("process s : ");
         if (!json->enterobject())
         {
             return false;
@@ -6956,6 +6992,7 @@ CommandFetchNodes::CommandFetchNodes(MegaClient* client,
     // End of outgoing shares array
     f = mFilters.emplace("{[s", [client](JSON *json)
     {
+        //TimeSpan span("process {[s : ");
         client->mergenewshares(0);
 
         json->enterarray();
@@ -6968,6 +7005,7 @@ CommandFetchNodes::CommandFetchNodes(MegaClient* client,
     // Users (one by one)
     mFilters.emplace("{[u{", [client](JSON *json)
     {
+        //TimeSpan span("process u : ");
         if (client->readuser(json, false) != 1)
         {
             return false;
@@ -6979,6 +7017,7 @@ CommandFetchNodes::CommandFetchNodes(MegaClient* client,
     mFilters.emplace("{\"sn",
                      [this](JSON* json)
                      {
+                        //TimeSpan span("process sn : ");
                          // Not applying the scsn until the end of the parsing
                          // because it could arrive before nodes
                          // (despite at the moment it is arriving at the end)
@@ -6989,12 +7028,14 @@ CommandFetchNodes::CommandFetchNodes(MegaClient* client,
     mFilters.emplace("{\"st",
                      [this](JSON* json)
                      {
+                        //TimeSpan span("process st : ");
                          return json->storeobject(&mSt);
                      });
 
     // Incoming contact requests
     mFilters.emplace("{[ipc", [client](JSON *json)
     {
+        //TimeSpan span("process ipc : ");
         client->readipc(json);
         return true;
     });
@@ -7002,6 +7043,7 @@ CommandFetchNodes::CommandFetchNodes(MegaClient* client,
     // Outgoing contact requests
     mFilters.emplace("{[opc", [client](JSON *json)
     {
+        //TimeSpan span("process opc : ");
         client->readopc(json);
         return true;
     });
@@ -7009,6 +7051,7 @@ CommandFetchNodes::CommandFetchNodes(MegaClient* client,
     // Public links (one by one)
     mFilters.emplace("{[ph{", [client](JSON *json)
     {
+        //TimeSpan span("process ph : ");
         if (client->procphelement(json) == 1)
         {
             json->leaveobject();
@@ -7019,6 +7062,7 @@ CommandFetchNodes::CommandFetchNodes(MegaClient* client,
     // Sets and Elements
     mFilters.emplace("{{aesp", [client](JSON *json)
     {
+        //TimeSpan span("process aesp : ");
         client->procaesp(*json); // continue even if it failed, it's not critical
         return true;
     });
@@ -7026,27 +7070,31 @@ CommandFetchNodes::CommandFetchNodes(MegaClient* client,
     // Parsing finished
     mFilters.emplace("{", [this, client](JSON *)
     {
+        //TimeSpan span("process { : ");
         WAIT_CLASS::bumpds();
         client->fnstats.timeToLastByte = Waiter::ds - client->fnstats.startTime;
 
         assert(mScsn && "scsn must be received in response to `f` command always");
         if (mScsn)
         {
+            //TimeSpan kdkdkd("process { setScsn: ");
             client->scsn.setScsn(mScsn);
         }
 
         if (!mSt.empty())
         {
+            //TimeSpan iiwll("process { seq update: ");
             client->app->sequencetag_update(mSt);
             client->mScDbStateRecord.seqTag = mSt;
         }
-
+        //TimeSpan ksjal("process { parsing finish: ");
         return parsingFinished();
     });
 
     // Numeric error, either a number or an error object {"err":XXX}
     mFilters.emplace("#", [this, client](JSON *json)
     {
+        //TimeSpan span("process # : ");
         // like CommandFetchNodes::procresult when r.wasErrorOrOK() is true but
         // parsing the specific error code here instead of directly receiving it
         WAIT_CLASS::bumpds();
@@ -7063,6 +7111,7 @@ CommandFetchNodes::CommandFetchNodes(MegaClient* client,
     mFilters.emplace("E",
                      [client](JSON*)
                      {
+                        //TimeSpan span("process E : ");
                          WAIT_CLASS::bumpds();
                          client->fnstats.timeToLastByte = Waiter::ds - client->fnstats.startTime;
                          client->purgenodesusersabortsc(true);
@@ -7077,6 +7126,7 @@ CommandFetchNodes::CommandFetchNodes(MegaClient* client,
     // Chat-related callbacks
     mFilters.emplace("{{mcf", [client](JSON *json)
     {
+        //TimeSpan span("process mcf : ");
         // List of chatrooms
         client->procmcf(json);
         return true;
@@ -7084,6 +7134,7 @@ CommandFetchNodes::CommandFetchNodes(MegaClient* client,
 
     f = mFilters.emplace("{[mcpna", [client](JSON *json)
     {
+        //TimeSpan span("process mcpna : ");
         // nodes shared in chatrooms
         client->procmcna(json);
         return true;
@@ -7092,6 +7143,7 @@ CommandFetchNodes::CommandFetchNodes(MegaClient* client,
 
     mFilters.emplace("{[mcsm", [client](JSON *json)
     {
+        //TimeSpan span("process mcsm : ");
         // scheduled meetings
         client->procmcsm(json);
         return true;
@@ -7118,6 +7170,7 @@ const char* CommandFetchNodes::getJSON(MegaClient* clientOfRequest)
 // purge and rebuild node/user tree
 bool CommandFetchNodes::procresult(Result r, JSON& json)
 {
+    std::cout<<"procresult f"<<std::endl;
     WAIT_CLASS::bumpds();
     client->fnstats.timeToLastByte = Waiter::ds - client->fnstats.startTime;
 
@@ -7274,7 +7327,8 @@ bool CommandFetchNodes::procresult(Result r, JSON& json)
 }
 
 bool CommandFetchNodes::parsingFinished()
-{
+{   {
+    //TimeSpan kdk("scsn ready:");
     if (!client->scsn.ready())
     {
         client->fetchingnodes = false;
@@ -7282,12 +7336,23 @@ bool CommandFetchNodes::parsingFinished()
         client->app->fetchnodes_result(API_EINTERNAL);
         return false;
     }
-
+    }
+    {
+        //TimeSpan tt("mergenewshares: ");
     client->mergenewshares(0);
-
+    }
+    {
+        //TimeSpan tt("initCompleted: ");
+        //667us
+        //marcotan
     client->mNodeManager.initCompleted();  // (nodes already written into DB)
-
+    }
+    {
+        //TimeSpan tt("initsc: ");
+        //700us
+        //marcotan
     client->initsc();
+    }
     client->pendingsccommit = false;
     client->fetchnodestag = tag;
 

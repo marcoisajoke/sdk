@@ -979,6 +979,7 @@ void DemoApp::chatlink_result(handle h, error e)
     }
 }
 
+
 void DemoApp::chatlinkclose_result(error e)
 {
     if (e)
@@ -10959,7 +10960,6 @@ void megacli()
 #else
     #error non-windows platforms must use the readline library
 #endif
-
     for (;;)
     {
         if (prompt == COMMAND)

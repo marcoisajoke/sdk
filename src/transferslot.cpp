@@ -1076,6 +1076,7 @@ void TransferSlot::doio(MegaClient* client, TransferDbCommitter& committer)
                     break;
 
                 case REQ_ASYNCIO:
+                    std::cout<<"req_asyncio finish"<<std::endl;
                     if (asyncIO[i]->finished)
                     {
                         LOG_verbose << "Conn " << i << " : Processing finished async fs operation";
@@ -1163,6 +1164,8 @@ void TransferSlot::doio(MegaClient* client, TransferDbCommitter& committer)
                             else
                             {
                                 lasterror = API_EWRITE;
+                                //marcotan why in the error branch?
+                                std::cout<<"req success"<<std::endl;
                                 reqs[i]->status = REQ_SUCCESS;
                             }
                             backoff = 2;

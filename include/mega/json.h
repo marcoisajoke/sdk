@@ -24,6 +24,7 @@
 
 #include "name_id.h"
 #include "types.h"
+#include "mega/common/trie_tree.h"
 
 namespace mega {
 
@@ -33,17 +34,22 @@ struct MEGA_API JSON
     JSON()
       : pos(nullptr)
     {
+        init();
     }
 
     explicit JSON(const string& data)
       : pos(data.c_str())
     {
+        init();
     }
 
     explicit JSON(const char* data)
       : pos(data)
     {
+        init();
     }
+
+    void init();
 
     const char* pos;
 
@@ -57,11 +63,12 @@ struct MEGA_API JSON
 
     std::uint64_t getfsfp();
     uint64_t getuint64();
-
+    int getnameid(Trie* t, char* buf);
     nameid getnameid();
     nameid getnameid(const char*) const;
 
 private:
+    int getNameidSkipNull(bool skipnullvalues, Trie* t, char* buf);
     nameid getNameidSkipNull(bool skipnullvalues);
 public:
     nameid getnameidvalue();

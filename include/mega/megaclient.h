@@ -46,6 +46,7 @@
 #include "treeproc.h"
 #include "user.h"
 #include "useralerts.h"
+#include "mega/common/trie_tree.h"
 
 // FUSE support.
 #include <mega/common/client_adapter.h>
@@ -507,7 +508,25 @@ struct DynamicMessageNotification
     std::map<std::string, std::string> callToAction2;
     std::map<std::string, std::map<std::string, std::string>> renderModes;
 };
-
+enum F_NODE_IDX {
+    F_NODE_IDX_EMPTY,
+    F_NODE_IDX_UND,
+    F_NODE_IDX_H,
+    F_NODE_IDX_P,
+    F_NODE_IDX_U,
+    F_NODE_IDX_T,
+    F_NODE_IDX_A,
+    F_NODE_IDX_K,
+    F_NODE_IDX_S,
+    F_NODE_IDX_I,
+    F_NODE_IDX_TS,
+    F_NODE_IDX_FA,
+    F_NODE_IDX_R,
+    F_NODE_IDX_SK,
+    F_NODE_IDX_SU,
+    F_NODE_IDX_STS,
+    
+};
 class MEGA_API MegaClient
 {
 public:
@@ -529,6 +548,8 @@ public:
 
     // timestamp of the creation of the account
     m_time_t accountsince;
+
+    Trie f_node_key_2_index;
 
     // Global Multi-Factor Authentication enabled
     bool gmfa_enabled;
@@ -2007,6 +2028,8 @@ public:
     bool fetchingnodes;
     int fetchnodestag;
 
+    
+
     // set true after fetchnodes and catching up on actionpackets, stays true after that.
     std::atomic<bool> statecurrent;
 
@@ -2086,6 +2109,7 @@ public:
 
     // Server-MegaClient request JSON and processing state flag ("processing a element")
     JSON jsonsc;
+    std::string json_string_mock = "{\"a\":[{\"a\":\"ua\",\"st\":\"!;Xp2iX\",\"u\":\"zdlxhlGOw20\",\"ua\":[\"^!stbmp\"],\"v\":[\"sAlvmD5ZSb4\"]}],\"w\":\"https://g.api.mega.co.nz/wsc/Unys4VbhgtNAZM-VKceDzw\",\"sn\":\"sAlvmD5ZSb4\"}";
     bool insca;
     bool insca_notlast;
 

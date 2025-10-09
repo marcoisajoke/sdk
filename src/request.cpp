@@ -18,7 +18,7 @@
  * You should have received a copy of the license along with this
  * program.
  */
-
+#include "mega.h"
 #include "mega/request.h"
 #include "mega/command.h"
 #include "mega/logging.h"
@@ -94,6 +94,7 @@ string Request::get(MegaClient* client, char reqidCounter[10], string& idempoten
 
 bool Request::processCmdJSON(Command* cmd, bool couldBeError, JSON& jsonResponse)
 {
+    //std::cout<<jsonResponse.pos<<std::endl;
     Error e;
     if (couldBeError && cmd->checkError(e, jsonResponse))
     {
@@ -168,7 +169,11 @@ m_off_t Request::processChunk(const char* chunk, MegaClient *client)
     // Only fetchnodes command is currently supported
     assert(isFetchNodes());
 
+    //std::cout<<"========processChunk========="<<std::endl;
+    //std::cout<<chunk<<std::endl;
     m_off_t consumed = 0;
+    std::cout<<chunk<<std::endl;
+    TimeSpan span("============== processChunk process time: ");
     Command& cmd = *cmds[0];
     client->restag = cmd.tag;
     cmd.client = client;
@@ -187,8 +192,12 @@ m_off_t Request::processChunk(const char* chunk, MegaClient *client)
         consumed++;
         assert(mJsonSplitter.isStarting());
     }
-
+    {
+        //TimeSpan tt("11111111111: ");
+        //4291us
+        //marcotan
     consumed += mJsonSplitter.processChunk(&cmd.mFilters, json.pos);
+    }
     if (mJsonSplitter.hasFailed())
     {
         // stop the processing
@@ -196,7 +205,6 @@ m_off_t Request::processChunk(const char* chunk, MegaClient *client)
         clear();
         return 0;
     }
-
     mChunkedProgress += static_cast<size_t>(consumed);
     json.begin(chunk + consumed);
     if (mJsonSplitter.hasFinished())
@@ -215,7 +223,7 @@ m_off_t Request::processChunk(const char* chunk, MegaClient *client)
         cmds[0].reset();
         clear();
     }
-
+    exit(0);
     return consumed;
 }
 

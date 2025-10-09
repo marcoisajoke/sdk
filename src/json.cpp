@@ -20,6 +20,7 @@
  */
 #include <cctype>
 #include <cstdint>
+#include "mega.h"
 
 #include "mega/json.h"
 #include "mega/base64.h"
@@ -30,11 +31,23 @@
 namespace mega {
 
 std::atomic<bool> gLogJSONRequests{false};
+static bool null_skip_char[256] = {0};
+
 
 #define JSON_verbose if (gLogJSONRequests) LOG_verbose
 
 // store array or object in string s
 // reposition after object
+//marcotan too heavy
+//bypass int
+//bypass [] {}
+//get string value
+void JSON::init() {
+    null_skip_char[(int)','] = true;
+    null_skip_char[(int)']'] = true;
+    null_skip_char[(int)'}'] = true;
+    
+}
 bool JSON::storeobject(string* s)
 {
     int openobject[2] = { 0 };
@@ -69,6 +82,7 @@ bool JSON::storeobject(string* s)
             openobject[*ptr == ']']--;
             if(openobject[*ptr == ']'] < 0)
             {
+                //marcotan why continue
                 LOG_err << "Parse error (])";
             }
         }
@@ -143,11 +157,23 @@ bool JSON::storeKeyValueFromObject(string& key, string& value)
 bool JSON::skipnullvalue()
 {
     // this applies only to values, after ':'
+    if(!pos) {
+        return false;
+    }
+    if(null_skip_char[*pos]) {
+        pos = pos + (*pos == ',');
+        return true;
+    }
+    return false;
+    
+
+    /*
     if (!pos)
         return false;
 
     switch (*pos)
     {
+    //marcotan why not validate json string should skip?
     case ',':         // empty value, i.e.  "foo":,
         ++pos;
     // fall through
@@ -170,7 +196,7 @@ bool JSON::skipnullvalue()
         case ',':     // null value, i.e.  "foo":null,
             ++pos;
         // fall through
-        case ']':     // null value, i.e.  "foo":null]
+        case ']':     // null value, i.e.  "foo":null]      
         case '}':     // null value, i.e.  "foo":null}
             pos += 4;
             return true;
@@ -179,6 +205,7 @@ bool JSON::skipnullvalue()
             return false;
         }
     }
+        */
 }
 
 bool JSON::isnumeric()
@@ -208,6 +235,10 @@ nameid JSON::getnameid(const char* ptr) const
     }
 
     return id;
+}
+
+int JSON::getnameid(Trie* t, char* buf) {
+    return getNameidSkipNull(true, t, buf);
 }
 
 nameid JSON::getnameid()
@@ -265,7 +296,51 @@ std::string JSON::getnameWithoutAdvance() const
 
     return name;
 }
+int JSON::getNameidSkipNull(bool skipnullvalues, Trie* t, char* buf) {
+    const char* ptr = pos;
+    char* p = buf;
+    int id = 0;
 
+    if (*ptr == ',' || *ptr == ':')
+    {
+        ptr++;
+    }
+    //ptr = ptr + (*ptr == ',' || *ptr == ':');
+
+    if (*ptr++ == '"')
+    {
+        while (*ptr && *ptr != '"')
+        {
+            //id = (id << 8) + static_cast<nameid>(*ptr++);
+            *p = *ptr;
+            p++;
+            ptr++;
+        }
+        *p = 0;
+        id = t->search(buf);
+        if(id == -1) {
+            id = 1;
+        }
+
+        assert(*ptr == '"'); // if either assert fails, check the json syntax, it might be something new/changed
+        pos = ptr + 1;
+
+        //key and value should be split logic
+        if (*pos == ':' || *pos == ',' )
+        {
+            pos++;
+        }
+        else
+        {
+            // don't skip the char if we're at the end of a structure eg. actionpacket with only {"a":"xyz"}
+            assert(*pos == '}' || *pos == ']');
+        }
+    }
+
+    bool skippedNull = id && skipnullvalues && skipnullvalue();
+
+    return skippedNull ? getnameid(t, buf) : id;
+}
 // pos points to [,]"name":...
 // returns nameid and repositons pos after :
 // no unescaping supported
@@ -278,6 +353,7 @@ nameid JSON::getNameidSkipNull(bool skipnullvalues)
     {
         ptr++;
     }
+    //ptr = ptr + (*ptr == ',' || *ptr == ':');
 
     if (*ptr++ == '"')
     {
@@ -289,6 +365,7 @@ nameid JSON::getNameidSkipNull(bool skipnullvalues)
         assert(*ptr == '"'); // if either assert fails, check the json syntax, it might be something new/changed
         pos = ptr + 1;
 
+        //key and value should be split logic
         if (*pos == ':' || *pos == ',' )
         {
             pos++;
@@ -345,6 +422,7 @@ int JSON::storebinary(byte* dst, int dstlen)
         l = Base64::atob(pos + 1, dst, dstlen);
 
         // skip string
+        //marcotan too heavy, just bypass the string is ok
         storeobject();
     }
 
@@ -441,7 +519,7 @@ m_off_t JSON::getint()
     }
 
     ptr = pos;
-
+    //marcotan no need to check 
     if (*ptr == '"')
     {
         ptr++;
@@ -457,8 +535,9 @@ m_off_t JSON::getint()
         // std::numeric_limits<m_off_t>::min().
         return -1;
     }
-
+    //marcotan ptr is the first char of int
     handle r = static_cast<handle>(atoll(ptr));
+    //double handle the int string, and too much branch check
     storeobject();
 
     return static_cast<m_off_t>(r);
@@ -575,6 +654,7 @@ bool JSON::leavearray()
 // try to enter object
 bool JSON::enterobject()
 {
+    //marcotan not quite sure. maybe there is another way to enhance
     if (*pos == '}')
     {
         pos++;
@@ -1101,8 +1181,11 @@ void JSONSplitter::clear()
     mFailed = false;
 }
 
+
+
 m_off_t JSONSplitter::processChunk(std::map<string, std::function<bool (JSON *)> > *filters, const char *data)
 {
+    TimeSpan mb("JSONSplitter::processChunk");
     if (hasFailed() || hasFinished())
     {
         return 0;
@@ -1110,6 +1193,7 @@ m_off_t JSONSplitter::processChunk(std::map<string, std::function<bool (JSON *)>
 
     if (filters)
     {
+        //marcotan for what?
         auto filterit = filters->find("<");
         if (filterit != filters->end())
         {
@@ -1411,7 +1495,7 @@ m_off_t JSONSplitter::processChunk(std::map<string, std::function<bool (JSON *)>
             return 0;
         }
     }
-
+    //TimeSpan fff("process chunck success:"); 1us
     if (filters && !chunkProcessingFinishedSuccessfully(filters))
     {
         LOG_err << "Error finishing the processing of a chunk";

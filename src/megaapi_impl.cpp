@@ -6984,6 +6984,8 @@ void MegaApiImpl::init(MegaApi* publicApi,
     threadExit = 0;
     thread = std::thread([this](){ threadEntryPoint(this); } );
     threadId = thread.get_id();
+
+    
 }
 
 MegaApiImpl::~MegaApiImpl()
@@ -7939,6 +7941,7 @@ void MegaApiImpl::loop()
 
     while(true)
     {
+        std::cout<<"ttttt"<<std::endl;
         int r;
         {
             SdkMutexGuard g(sdkMutex);
@@ -7948,7 +7951,6 @@ void MegaApiImpl::loop()
         if (!r)
         {
             r = client->dowait();
-
             {
                 SdkMutexGuard g(sdkMutex);
                 r |= client->checkevents();
@@ -7975,6 +7977,7 @@ void MegaApiImpl::loop()
                 client->exec();
             }
         }
+        
     }
 
     SdkMutexGuard g(sdkMutex);
@@ -14696,9 +14699,11 @@ void MegaApiImpl::unlinkversions_result(error e)
     fireOnRequestFinish(request, std::make_unique<MegaErrorPrivate>(e));
 }
 
+
 void MegaApiImpl::fetchnodes_result(const Error &e)
 {
     MegaRequestPrivate* request = NULL;
+    //TimeSpan span("MegaApiImpl::fetchnodes_result");
     if (!client->restag)
     {
         for (map<int, MegaRequestPrivate *>::iterator it = requestMap.begin(); it != requestMap.end(); it++)

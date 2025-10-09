@@ -1964,7 +1964,22 @@ MegaClient::MegaClient(MegaApp* a,
         fsaccess = std::make_unique<LinuxFileSystemAccess>();
     }
 #endif
-    mJourneyId =
+    f_node_key_2_index.insert("", F_NODE_IDX_EMPTY);
+    f_node_key_2_index.insert("h", F_NODE_IDX_H);
+    f_node_key_2_index.insert("p", F_NODE_IDX_P);
+    f_node_key_2_index.insert("u", F_NODE_IDX_U);
+    f_node_key_2_index.insert("t", F_NODE_IDX_T);
+    f_node_key_2_index.insert("a", F_NODE_IDX_A);
+    f_node_key_2_index.insert("k", F_NODE_IDX_K);
+    f_node_key_2_index.insert("s", F_NODE_IDX_S);
+    f_node_key_2_index.insert("i", F_NODE_IDX_I);
+    f_node_key_2_index.insert("ts", F_NODE_IDX_TS);
+    f_node_key_2_index.insert("fa", F_NODE_IDX_FA);
+    f_node_key_2_index.insert("r", F_NODE_IDX_R);
+    f_node_key_2_index.insert("sk", F_NODE_IDX_SK);
+    f_node_key_2_index.insert("su", F_NODE_IDX_SU);
+    f_node_key_2_index.insert("sts", F_NODE_IDX_STS);
+    mJourneyId = 
         std::make_unique<JourneyID>(fsaccess, dbaccess ? dbaccess->rootPath() : LocalPath());
 
     mNodeManager.reset();
@@ -2178,7 +2193,7 @@ std::string MegaClient::getWritableLinkAuthKey(handle nodeHandle)
 void MegaClient::exec()
 {
     CodeCounter::ScopeTimer ccst(performanceStats.execFunction);
-
+    
     WAIT_CLASS::bumpds();
 
     if (overquotauntil && overquotauntil < Waiter::ds)
@@ -3054,6 +3069,8 @@ void MegaClient::exec()
 
             switch (static_cast<reqstatus_t>(pendingsc->status))
             {
+                    //marcotan can not find status be set to success.
+                    //maybe set by server. no idea
             case REQ_SUCCESS:
                 pendingscTimedOut = false;
                 if (pendingsc->contentlength == 1
@@ -3069,9 +3086,16 @@ void MegaClient::exec()
                 if (*pendingsc->in.c_str() == '{')
                 {
                     insca = false;
-                    insca_notlast = false;
-                    jsonsc.begin(pendingsc->in.c_str());
+                    insca_notlast = false; 
+                    //if(json_string_mock.length() > 0) {
+                    //    jsonsc.begin(json_string_mock.c_str());
+                    //} else {
+                        jsonsc.begin(pendingsc->in.c_str());
+                    //}
+                    
                     jsonsc.enterobject();
+                    //marcotan
+                    //std::cout<<"begin process json string: "<< pendingsc->in.c_str() << std::endl;
                     app->notify_network_activity(NetworkActivityChannel::SC,
                                                  NetworkActivityType::REQUEST_RECEIVED,
                                                  API_OK);
@@ -3224,15 +3248,28 @@ void MegaClient::exec()
             }
         }
 
+        
+
         if (!scpaused && jsonsc.pos)
         {
             // FIXME: reload in case of bad JSON
+            {
+                {
+            //TimeSpan ttt("procsc first perf: ");
+            //procsc();
+                }
+            //TimeSpan tt("procsc perf:");
+            //for(int i=0; i<10000; i++) {
+            //    procsc();
+            //}
+        }   
             if (procsc())
             {
                 // completed - initiate next SC request
                 jsonsc.pos = nullptr;
                 pendingsc.reset();
                 btsc.reset();
+                json_string_mock.clear();
             }
         }
 
@@ -5228,6 +5265,8 @@ void MegaClient::httprequest(const char *url, int method, bool binary, const cha
     }
 }
 
+
+
 // process server-client request
 bool MegaClient::procsc()
 {
@@ -5239,26 +5278,34 @@ bool MegaClient::procsc()
 
     CodeCounter::ScopeTimer ccst(performanceStats.scProcessingTime);
     nameid name;
-
+    //TimeSpan span("procsc func ");
     std::shared_ptr<Node> lastAPDeletedNode;
 
     for (;;)
     {
         if (!insca)
         {
+            //TimeSpan tt("process action key");
             switch (jsonsc.getnameid())
             {
+                
                 case makeNameid("w"):
+                    //std::cout<<"process key w"<<std::endl;
+                    //marcotan too much unused branch check for only get the string value.
                     jsonsc.storeobject(&scnotifyurl);
                     break;
 
                 case makeNameid("ir"):
+                    //std::cout<<"process key ir"<<std::endl;
                     // when spoonfeeding is in action, there may still be more actionpackets to be delivered.
+                    //marcotan see inside getInt.
                     insca_notlast = jsonsc.getint() == 1;
                     break;
 
-                case makeNameid("sn"):
+                case makeNameid("sn"): {
+                    //TimeSpan tt("process sn all");
                     // the sn element is guaranteed to be the last in sequence (except for notification requests (c=50))
+
                     scsn.setScsn(&jsonsc);
                     // At this point no CurrentSeqtag should be seen. mCurrentSeqtagSeen is set true
                     // when action package is processed and the seq tag matches with mCurrentSeqtag
@@ -5266,12 +5313,22 @@ bool MegaClient::procsc()
                     notifypurge();
                     if (sctable)
                     {
+                        //TimeSpan tt("process sn sctable");
                         if (!pendingcs && !csretrying && !reqs.readyToSend())
                         {
                             LOG_debug << "DB transaction COMMIT (sessionid: " << string(sessionid, sizeof(sessionid)) << ")";
+                            {
+                            //TimeSpan tt("process sn commit");
                             sctable->commit();
+                            }
+                            {
+                            //TimeSpan tt("process sn begin");
                             sctable->begin();
+                            }
+                            {
+                            //TimeSpan tt("process sn notify");
                             app->notify_dbcommit();
+                            }
                             pendingsccommit = false;
                         }
                         else
@@ -5281,15 +5338,17 @@ bool MegaClient::procsc()
                         }
                     }
                     break;
+                }
 
-                case EOO:
+                case EOO: {
+                    //TimeSpan spp("EOO func call ");
                     if (!useralerts.isDeletedSharedNodesStashEmpty())
                     {
 			useralerts.purgeNodeVersionsFromStash();
                         useralerts.convertStashedDeletedSharedNodes();
                     }
-
-
+                    
+                    
                     LOG_debug << "Processing of action packets for " << string(sessionid, sizeof(sessionid)) << " finished.  More to follow: " << insca_notlast;
                     mergenewshares(1);
                     applykeys();
@@ -5299,9 +5358,11 @@ bool MegaClient::procsc()
                     {
                         if (fetchingnodes)
                         {
+                            //TimeSpan spp_0("0000000000");
                             notifypurge();
                             if (sctable)
                             {
+                                //TimeSpan spp_7("77777777777");
                                 LOG_debug << "DB transaction COMMIT (sessionid: " << string(sessionid, sizeof(sessionid)) << ")";
                                 sctable->commit();
                                 sctable->begin();
@@ -5321,12 +5382,23 @@ bool MegaClient::procsc()
                                 LOG_debug << "cached blocked states reports blocked, and no block state has been received before, issuing whyamiblocked";
                                 whyamiblocked();// lets query again, to trigger transition and restoreSyncs
                             }
-
+                            //TimeSpan spp_8("88888888");
+                            {
+                                //TimeSpan spp_98("enabletransferresumption");
+                                //enabletransferresumption diff 4352us
                             enabletransferresumption();
+                            }
+                            {
+                            //TimeSpan spp_98("fetchnodes_result");
+                            //fetchnodes_result diff 4469us
                             app->fetchnodes_result(API_OK);
+                            }
+                            {
+                            //TimeSpan spp_98("notify_dbcommit");
                             app->notify_dbcommit();
+                            }
                             fetchnodesAlreadyCompletedThisSession = true;
-
+                            //TimeSpan spp_9("9999999999");
                             WAIT_CLASS::bumpds();
                             fnstats.timeToSyncsResumed = Waiter::ds - fnstats.startTime;
 
@@ -5343,9 +5415,10 @@ bool MegaClient::procsc()
                             WAIT_CLASS::bumpds();
                             fnstats.timeToCurrent = Waiter::ds - fnstats.startTime;
                         }
+                    
                         uint64_t numNodes = mNodeManager.getNodeCount();
                         fnstats.nodesCurrent = static_cast<long long>(numNodes);
-
+                        //TimeSpan spp_1("111111111");
                         if (mKeyManager.generation())
                         {
                             // Clear in-use bit if needed for the shared nodes in ^!keys.
@@ -5367,6 +5440,7 @@ bool MegaClient::procsc()
                             syncsAlreadyLoadedOnStatecurrent = true;
                         }
 #endif
+                        //TimeSpan spp_2("222222222");
                         if (tctable && cachedfiles.size())
                         {
                             TransferDbCommitter committer(tctable);
@@ -5396,7 +5470,7 @@ bool MegaClient::procsc()
 
                         string report;
                         fnstats.toJsonArray(&report);
-
+                        //TimeSpan spp_3("3333333333");
                         sendevent(99426, report.c_str(), 0);    // Treeproc performance log
 
                         // NULL vector: "notify all elements"
@@ -5426,7 +5500,7 @@ bool MegaClient::procsc()
                             }
                         }
                     }
-
+                    //TimeSpan spp_4("44444444");
                     {
                         // In case a fetchnodes() occurs mid-session.  We should not allow
                         // the syncs to see the new tree unless we've caught up to at least
@@ -5459,7 +5533,8 @@ bool MegaClient::procsc()
                     }
 
                     if (pendingsccommit && sctable && !reqs.cmdsInflight() && scsn.ready())
-                    {
+                    {  
+                        //TimeSpan s_11("eoo db commit");
                         LOG_debug << "Executing postponed DB commit 1";
                         sctable->commit();
                         sctable->begin();
@@ -5477,8 +5552,10 @@ bool MegaClient::procsc()
 #endif
 
                     return true;
+                }
 
                 case makeNameid("a"):
+                    //std::cout<<"process a"<<std::endl;
                     if (jsonsc.enterarray())
                     {
                         LOG_debug << "Processing action packets for " << string(sessionid, sizeof(sessionid));
@@ -5487,6 +5564,8 @@ bool MegaClient::procsc()
                     }
                     // fall through
                 default:
+                    //std::cout<<"process default"<<std::endl;
+                    //too heavy, just by pass the value is OK
                     if (!jsonsc.storeobject())
                     {
                         LOG_err << "Error parsing sc request";
@@ -5510,10 +5589,12 @@ bool MegaClient::procsc()
                 }
             }
             jsonsc.pos = actionpacketStart;
-
             if (jsonsc.enterobject())
             {
                 // the "a" attribute is guaranteed to be the first in the object
+                //marcotan use getnameid to get json key seams too heavy
+                //marcotan maybe json is not so easy to check. logic should keep.
+                //key and value decode should be seperate
                 if (jsonsc.getnameid() == makeNameid("a"))
                 {
                     if (!statecurrent)
@@ -5623,7 +5704,7 @@ bool MegaClient::procsc()
                                 // outgoing pending contact request update (from them, accept/deny/ignore)
                                 sc_upc(false);
                                 break;
-
+                            //marcotan dup compute
                             case makeNameid("ph"):
                                 // public links handles
                                 sc_ph();
@@ -6535,6 +6616,7 @@ bool MegaClient::sc_checkActionPacket(Node* lastAPDeletedNode)
 
     for (;;)
     {
+        //marcotan decode string key and string value should be logic seperate
         switch (jsonsc.getnameid())
         {
         case makeNameid("a"): // action referred by the packet
@@ -6542,12 +6624,14 @@ bool MegaClient::sc_checkActionPacket(Node* lastAPDeletedNode)
             break;
 
         case makeNameid("i"): // id of the client who made the action triggering this packet
+            //marcotan bypass any value type
             jsonsc.storeobject();
             break;
 
         case makeNameid("st"): // sequence tag
         {
             string tag;
+            //marcotan string type is sure. just fetch the string is ok
             jsonsc.storeobject(&tag);
             return sc_checkSequenceTag(tag);
         }
@@ -7242,10 +7326,11 @@ void MegaClient::sc_userattr()
             case name_id::u:
                 uh = jsonsc.gethandle(USERHANDLE);
                 break;
-
+            //marcotan dup compute
             case makeNameid("ua"):
                 if (jsonsc.enterarray())
                 {
+                    //marcotan decode string 
                     while (jsonsc.storeobject(&ua))
                     {
                         ualist.push_back(ua);
@@ -7264,7 +7349,7 @@ void MegaClient::sc_userattr()
                     jsonsc.leavearray();
                 }
                 break;
-
+            //get key meet end of the } ]
             case EOO:
                 if (ISUNDEF(uh))
                 {
@@ -7272,6 +7357,7 @@ void MegaClient::sc_userattr()
                 }
                 else
                 {
+                    //marcotan use unordered map instead of map
                     u = finduser(uh);
                 }
                 if (!u)
@@ -7406,6 +7492,7 @@ void MegaClient::sc_userattr()
                 return;
 
             default:
+                //marco bypass any value
                 if (!jsonsc.storeobject())
                 {
                     return;
@@ -10344,6 +10431,71 @@ int MegaClient::readnodes(JSON* j, int notify, putsource_t source, vector<NewNod
     return j->leavearray();
 }
 
+static bool idx_h_func(JSON* j, void* h) {
+    *(handle*)h = j->gethandle();
+    return true;
+}
+static bool idx_p_func(JSON* j, void* ph) {
+    *(handle*)ph = j->gethandle();
+    return true;
+}
+static bool idx_u_func(JSON* j, void* u) {
+    *(handle*)u = j->gethandle(8);
+    return true;
+}
+static bool idx_t_func(JSON* j, void* t) {
+    *(nodetype_t*)t = (nodetype_t)j->getint();
+    return true;
+}
+static bool idx_a_func(JSON* j, void* a) {
+    *(char**)a = (char*)(j->getvalue());
+    return true;
+}
+static bool idx_k_func(JSON* j, void* nodeKey) {
+    *(char**)nodeKey = (char*)(j->getvalue());
+    return true;
+}
+static bool idx_s_func(JSON* j, void* s) {
+    *(int64_t*)s = j->getint();
+    return true;
+}
+static bool idx_i_func(JSON* j, void* nni) {
+    *(int64_t*)nni = int(j->getint());
+    return true;
+}
+static bool idx_ts_func(JSON* j, void* ts) {
+    *(int64_t*)ts = j->getint();
+    return true;
+}
+static bool idx_fa_func(JSON* j, void* fa) {
+    *(char**)fa = (char*)(j->getvalue());
+    return true;
+}
+static bool idx_r_func(JSON* j, void* rl) {
+    *(accesslevel_t*)rl = (accesslevel_t)j->getint();
+    return true;
+}
+static bool idx_sk_func(JSON* j, void* sk) {
+    *(char**)sk = (char*)(j->getvalue());
+    return true;
+}
+static bool idx_su_func(JSON* j, void* su) {
+    *(handle*)su = j->gethandle(8);
+    return true;
+}
+static bool idx_sts_func(JSON* j, void* sts) {
+    *(int64_t*)sts = j->getint();
+    return true;
+}
+static bool idx_und_func(JSON* j, void* nn) {
+    return j->storeobject();
+}
+static bool idx_0_func(JSON* j, void* n) {
+    return true;
+}
+
+typedef bool (*readNodeStateFunc)(JSON* j, void* nn);
+
 int MegaClient::readnode(JSON* j,
                          int notify,
                          putsource_t /*source*/,
@@ -10357,7 +10509,25 @@ int MegaClient::readnode(JSON* j,
                          bool* firstHandleMatchesDelete)
 {
     std::shared_ptr<Node> n;
-
+    static std::vector<readNodeStateFunc> func_arr = {
+        idx_0_func,
+        idx_und_func,
+        idx_h_func,
+        idx_p_func,
+        idx_u_func,
+        idx_t_func,
+        idx_a_func,
+        idx_k_func,
+        idx_s_func,
+        idx_i_func,
+        idx_ts_func,
+        idx_fa_func,
+        idx_r_func,
+        idx_sk_func,
+        idx_su_func,
+        idx_sts_func,
+    };
+    
     if (j->enterobject())
     {
         handle h = UNDEF, ph = UNDEF;
@@ -10370,14 +10540,37 @@ int MegaClient::readnode(JSON* j,
         accesslevel_t rl = ACCESS_UNKNOWN;
         m_off_t s = NEVER;
         m_time_t ts = -1, sts = -1;
-        nameid name;
+        int name;
         int nni = -1;
-
-        while ((name = j->getnameid()) != EOO)
+        char buf[32] = {0};
+        std::vector<void*> func_data {
+            &h,
+            &h,
+            &h,
+            &ph,
+            &u,
+            &t,
+            &a,
+            &nodeKey,
+            &s,
+            &nni,
+            &ts,
+            &fa,
+            &rl,
+            &sk,
+            &su,
+            &sts,           
+        };
+        while ((name = j->getnameid(&f_node_key_2_index, buf)) != EOO)
         {
+            if(func_arr[name](j, func_data[name])) {
+                continue;
+            }
+            return 2;
+            /*
             switch (name)
             {
-                case makeNameid("h"): // new node: handle
+                case F_NODE_IDX_H: // new node: handle
                     h = j->gethandle();
                     if (priorActionpacketDeletedNode && firstHandleMatchesDelete)
                     {
@@ -10385,57 +10578,58 @@ int MegaClient::readnode(JSON* j,
                         priorActionpacketDeletedNode = nullptr;
                     }
                     break;
-
-                case makeNameid("p"): // parent node
+                case F_NODE_IDX_P:
+                //case makeNameid("p"): // parent node
                     ph = j->gethandle();
                     break;
-
-                case name_id::u: // owner user
+                case F_NODE_IDX_U:
+//                case name_id::u: // owner user
                     u = j->gethandle(USERHANDLE);
                     break;
-
-                case makeNameid("t"): // type
+                case F_NODE_IDX_T:
+//                case makeNameid("t"): // type
                     t = (nodetype_t)j->getint();
                     break;
-
-                case makeNameid("a"): // attributes
+                case F_NODE_IDX_A:
+//                case makeNameid("a"): // attributes
                     a = j->getvalue();
                     break;
-
-                case makeNameid("k"): // key(s)
+                case F_NODE_IDX_K:
+//                case makeNameid("k"): // key(s)
                     nodeKey = j->getvalue();
                     break;
-
-                case makeNameid("s"): // file size
+                case F_NODE_IDX_S:
+//                case makeNameid("s"): // file size
                     s = j->getint();
                     break;
-
-                case makeNameid("i"): // related source NewNode index
+                case F_NODE_IDX_I:
+//                case makeNameid("i"): // related source NewNode index
                     nni = int(j->getint());
                     break;
-
-                case makeNameid("ts"): // actual creation timestamp
+                case F_NODE_IDX_TS:
+//                case makeNameid("ts"): // actual creation timestamp
                     ts = j->getint();
                     break;
-
-                case makeNameid("fa"): // file attributes
+                case F_NODE_IDX_FA:
+//                case makeNameid("fa"): // file attributes
                     fa = j->getvalue();
                     break;
 
                     // inbound share attributes
-                case makeNameid("r"): // share access level
+                case F_NODE_IDX_R:
+               // case makeNameid("r"): // share access level
                     rl = (accesslevel_t)j->getint();
                     break;
-
-                case makeNameid("sk"): // share key
+                case F_NODE_IDX_SK:
+//                case makeNameid("sk"): // share key
                     sk = j->getvalue();
                     break;
-
-                case makeNameid("su"): // sharing user
+                case F_NODE_IDX_SU:
+//                case makeNameid("su"): // sharing user
                     su = j->gethandle(USERHANDLE);
                     break;
-
-                case makeNameid("sts"): // share timestamp
+                case F_NODE_IDX_STS:
+//                case makeNameid("sts"): // share timestamp
                     sts = j->getint();
                     break;
 
@@ -10445,6 +10639,7 @@ int MegaClient::readnode(JSON* j,
                         return 2;
                     }
             }
+                    */
         }
 
         if (ISUNDEF(h))
@@ -10453,6 +10648,11 @@ int MegaClient::readnode(JSON* j,
         }
         else
         {
+            if (priorActionpacketDeletedNode && firstHandleMatchesDelete)
+            {
+                *firstHandleMatchesDelete = h == priorActionpacketDeletedNode->nodehandle;
+                priorActionpacketDeletedNode = nullptr;
+            }
             if (t == TYPE_UNKNOWN)
             {
                 warn("Unknown node type");
@@ -15096,20 +15296,22 @@ void MegaClient::enabletransferresumption()
     }
     else
     {
+        //TimeSpan kdkdkdk("enabletransferresumption hash: ");
         string lok;
         Hash hash;
         hash.add((const byte *)dbname.c_str(), unsigned(dbname.size() + 1));
         hash.get(&lok);
         tckey.setkey((const byte*)lok.data());
     }
-
+    //TimeSpan iiiiee("enabletransferresumption table open: ");
     dbname.insert(0, "transfers_");
-
+    {
+        //TimeSpan iiiiee("enabletransferresumption table reset: ");
     tctable.reset(dbaccess->open(rng, *fsaccess, dbname, DB_OPEN_FLAG_RECYCLE | DB_OPEN_FLAG_TRANSACTED, [this](DBError error)
     {
         handleDbError(error);
     }));
-
+    }
     if (!tctable)
     {
         return;
@@ -15120,7 +15322,7 @@ void MegaClient::enabletransferresumption()
     // However, upon login into an account, previously cached transfers are discarded.
     // If we want to resume those transfers after logging in on the main instance,
     // we should read them from the default cache and resume them.
-
+    //TimeSpan ssss("enabletransferresumption mid. -------------: ");
     uint32_t id;
     string data;
     Transfer* t;
@@ -15130,6 +15332,7 @@ void MegaClient::enabletransferresumption()
     LOG_info << "Loading transfers from local cache";
     tctable->rewind();
     {
+        //TimeSpan ssss("committer");
         TransferDbCommitter committer(tctable); // needed in case of tctable->del()
         while (tctable->next(&id, &data, &tckey))
         {
@@ -15170,6 +15373,7 @@ void MegaClient::enabletransferresumption()
     // postpone the resumption until the filesystem is updated
     if ((!sid.size() && !loggedIntoFolder()) || statecurrent)
     {
+        //TimeSpan dddd("second commiter");
         TransferDbCommitter committer(tctable);
         for (unsigned int i = 0; i < cachedfiles.size(); i++)
         {

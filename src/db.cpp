@@ -76,6 +76,7 @@ bool DbTable::put(uint32_t type, Cacheable* record, SymmCipher* key)
 // get next record, decrypt and unpad
 bool DbTable::next(uint32_t* type, string* data, SymmCipher* key)
 {
+    std::cout<<"db next"<<std::endl;
     if (next(type, data))
     {
         if (!*type)
