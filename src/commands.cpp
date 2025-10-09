@@ -6915,7 +6915,7 @@ CommandFetchNodes::CommandFetchNodes(MegaClient* client,
     // Node objects (one by one)
     auto f = mFilters.emplace("{[f{", [this, client](JSON *json)
     {
-        TimeSpan span("process f : ");
+        //TimeSpan span("process f : ");
         
         auto pos = json->pos;
         for(int i=0; i<1000000; i++) {
@@ -7342,13 +7342,13 @@ bool CommandFetchNodes::parsingFinished()
     client->mergenewshares(0);
     }
     {
-        TimeSpan tt("initCompleted: ");
+        //TimeSpan tt("initCompleted: ");
         //667us
         //marcotan
     client->mNodeManager.initCompleted();  // (nodes already written into DB)
     }
     {
-        TimeSpan tt("initsc: ");
+        //TimeSpan tt("initsc: ");
         //700us
         //marcotan
     client->initsc();

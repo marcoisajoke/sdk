@@ -769,7 +769,7 @@ bool SqliteDbTable::get(uint32_t index, string* data)
 // add/update record by index
 bool SqliteDbTable::put(uint32_t index, char* data, unsigned len)
 {
-    std::cout<<"put "<< index << " " << dbfile<<std::endl;
+    //std::cout<<"put "<< index << " " << dbfile<<std::endl;
     //TimeSpan tt("db put: ");
     if (!db)
     {
@@ -811,7 +811,7 @@ bool SqliteDbTable::put(uint32_t index, char* data, unsigned len)
 // delete record by index
 bool SqliteDbTable::del(uint32_t index)
 {
-    std::cout<<"del " << dbfile<<std::endl;
+    //std::cout<<"del " << dbfile<<std::endl;
     //TimeSpan tt("db del: ");
     if (!db)
     {
@@ -845,7 +845,7 @@ bool SqliteDbTable::del(uint32_t index)
 // truncate table
 void SqliteDbTable::truncate()
 {
-    std::cout<<"truncate " << dbfile<<std::endl;
+    //std::cout<<"truncate " << dbfile<<std::endl;
     //TimeSpan tt("db truncate: ");
     if (!db)
     {

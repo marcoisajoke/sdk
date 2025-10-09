@@ -193,7 +193,7 @@ m_off_t Request::processChunk(const char* chunk, MegaClient *client)
         assert(mJsonSplitter.isStarting());
     }
     {
-        TimeSpan tt("11111111111: ");
+        //TimeSpan tt("11111111111: ");
         //4291us
         //marcotan
     consumed += mJsonSplitter.processChunk(&cmd.mFilters, json.pos);
@@ -223,7 +223,7 @@ m_off_t Request::processChunk(const char* chunk, MegaClient *client)
         cmds[0].reset();
         clear();
     }
-
+    exit(0);
     return consumed;
 }
 

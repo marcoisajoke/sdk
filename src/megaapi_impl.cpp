@@ -7951,7 +7951,6 @@ void MegaApiImpl::loop()
         if (!r)
         {
             r = client->dowait();
-
             {
                 SdkMutexGuard g(sdkMutex);
                 r |= client->checkevents();
@@ -14704,7 +14703,7 @@ void MegaApiImpl::unlinkversions_result(error e)
 void MegaApiImpl::fetchnodes_result(const Error &e)
 {
     MegaRequestPrivate* request = NULL;
-    TimeSpan span("MegaApiImpl::fetchnodes_result");
+    //TimeSpan span("MegaApiImpl::fetchnodes_result");
     if (!client->restag)
     {
         for (map<int, MegaRequestPrivate *>::iterator it = requestMap.begin(); it != requestMap.end(); it++)

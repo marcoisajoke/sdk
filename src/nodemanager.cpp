@@ -1820,7 +1820,7 @@ void NodeManager::initCompleted_internal()
         return;
     }
     {
-        TimeSpan span("calculate node: ");
+        //TimeSpan span("calculate node: ");
     sharedNode_vector rootNodes = getRootNodesAndInshares();
     for (auto& node: rootNodes)
     {
@@ -1835,7 +1835,7 @@ void NodeManager::initCompleted_internal()
     }
     }
     {
-        TimeSpan span("createIndexes: ");
+        //TimeSpan span("createIndexes: ");
     mTable->createIndexes(mClient.mEnableSearchDBIndexes);
     }
     mInitialized = true;
