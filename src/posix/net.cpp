@@ -1723,6 +1723,7 @@ bool CurlHttpIO::multidoio(CURLM *curlmhandle)
                                            req->bufpos :
                                            static_cast<m_off_t>(req->in.size());
                 delete req->span;
+                std::cout<<"http end: "<<req->posturl<<std::endl;
                 
                 req->status =
                     ((req->httpstatus == 200 ||

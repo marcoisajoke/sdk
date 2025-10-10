@@ -306,6 +306,7 @@ void HttpReq::post(MegaClient* client, const char* data, unsigned len)
 
 void HttpReq::get(MegaClient *client)
 {
+    std::cout<<"http get"<< this->posturl<<std::endl;
     prepareMethod(client->httpio, METHOD_GET);
     httpio->post(this);
 }
